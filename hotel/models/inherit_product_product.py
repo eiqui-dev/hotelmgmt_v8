@@ -19,24 +19,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 # ---------------------------------------------------------------------------
+from openerp import models, fields, api, _
 
-from . import currency_exchange
-from . import folio_room_line
-from . import hotel_floor
-from . import hotel_folio
-from . import hotel_reservation
-from . import hotel_room
-from . import hotel_room_amenities
-from . import hotel_room_amenities_type
-from . import hotel_room_type
-from . import hotel_service_line
-from . import hotel_services
-from . import hotel_service_type
-from . import inherit_account_invoice
-from . import inherit_product_category
-from . import inherit_product_product
-from . import inherit_res_company
-from . import virtual_room
-from . import inherit_account_payment
-from . import reservation_restrictions
+class ProductProduct(models.Model):
+
+    _inherit = "product.product"
+
+    isroom = fields.Boolean('Is Room')
+    iscategid = fields.Boolean('Is categ id')
+    isservice = fields.Boolean('Is Service id')
 

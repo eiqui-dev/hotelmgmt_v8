@@ -367,7 +367,7 @@ msgid "Start Date"
 msgstr "Startdatum"
 
 #. module: hotel
-#: model:ir.model,name:hotel.model_hotel_folio_line
+#: model:ir.model,name:hotel.model_hotel_reservation
 msgid "hotel folio1 room line"
 msgstr ""
 

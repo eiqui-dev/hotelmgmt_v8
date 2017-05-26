@@ -19,24 +19,32 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 # ---------------------------------------------------------------------------
+from openerp import models, fields, api, _
 
-from . import currency_exchange
-from . import folio_room_line
-from . import hotel_floor
-from . import hotel_folio
-from . import hotel_reservation
-from . import hotel_room
-from . import hotel_room_amenities
-from . import hotel_room_amenities_type
-from . import hotel_room_type
-from . import hotel_service_line
-from . import hotel_services
-from . import hotel_service_type
-from . import inherit_account_invoice
-from . import inherit_product_category
-from . import inherit_product_product
-from . import inherit_res_company
-from . import virtual_room
-from . import inherit_account_payment
-from . import reservation_restrictions
+
+class AccountInvoice(models.Model):
+
+    _inherit = 'account.invoice'
+
+    @api.model
+    def create(self, vals):
+        cr, uid, context = self.env.args
+        context = dict(context)
+        if context.get('invoice_origin', False):
+            vals.update({'origin': context['invoice_origin']})
+        return super(AccountInvoice, self).create(vals)
+    
+    @api.multi
+    def confirm_paid(self):
+        '''
+        This method change pos orders states to done when folio invoice
+        is in done.
+        ----------------------------------------------------------
+        @param self: object pointer
+        '''
+        pos_order_obj = self.env['pos.order']
+        res = super(AccountInvoice, self).confirm_paid()
+        pos_odr_rec = pos_order_obj.search([('invoice_id', 'in', self._ids)])
+        pos_odr_rec and pos_odr_rec.write({'state': 'done'})
+        return res
 
