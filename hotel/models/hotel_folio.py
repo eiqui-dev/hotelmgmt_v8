@@ -324,76 +324,76 @@ class HotelFolio(models.Model):
                 vals = {}
             vals['name'] = self.env['ir.sequence'].next_by_code('hotel.folio')
             folio_id = super(HotelFolio, self).create(vals)
-            folio_room_line_obj = self.env['folio.room.line']
-            h_room_obj = self.env['hotel.room']
-            try:
-                for rec in folio_id:
-                    if not rec.reservation_id:
-                        for room_rec in rec.room_lines:
-                            prod = room_rec.product_id.name
-                            room_obj = h_room_obj.search([('name', '=', prod)])                            
-                            vals = {'room_id': room_obj.id,
-                                    'checkin': rec.checkin,
-                                    'checkout': rec.checkout,
-                                    'folio_id': rec.id,
-                                    }
-                            folio_room_line_obj.create(vals)
-            except:
-                for rec in folio_id:
-                    for room_rec in rec.room_lines:
-                        prod = room_rec.product_id.name
-                        room_obj = h_room_obj.search([('name', '=', prod)])                        
-                        vals = {'room_id': room_obj.id,
-                                'checkin': rec.checkin,
-                                'checkout': rec.checkout,
-                                'folio_id': rec.id,
-                                }
-                        folio_room_line_obj.create(vals)
+            #~ folio_room_line_obj = self.env['folio.room.line']
+            #~ h_room_obj = self.env['hotel.room']
+            #~ try:
+                #~ for rec in folio_id:
+                    #~ if not rec.reservation_id:
+                        #~ for room_rec in rec.room_lines:
+                            #~ prod = room_rec.product_id.name
+                            #~ room_obj = h_room_obj.search([('name', '=', prod)])
+                            #~ vals = {'room_id': room_obj.id,
+                                    #~ 'checkin': rec.checkin,
+                                    #~ 'checkout': rec.checkout,
+                                    #~ 'folio_id': rec.id,
+                                    #~ }
+                            #~ folio_room_line_obj.create(vals)
+            #~ except:
+                #~ for rec in folio_id:
+                    #~ for room_rec in rec.room_lines:
+                        #~ prod = room_rec.product_id.name
+                        #~ room_obj = h_room_obj.search([('name', '=', prod)])
+                        #~ vals = {'room_id': room_obj.id,
+                                #~ 'checkin': rec.checkin,
+                                #~ 'checkout': rec.checkout,
+                                #~ 'folio_id': rec.id,
+                                #~ }
+                        #~ folio_room_line_obj.create(vals)
         return folio_id
 
-    @api.multi
-    def write(self, vals):
+    #~ @api.multi
+    #~ def write(self, vals):
         """
         Overrides orm write method.
         @param self: The object pointer
         @param vals: dictionary of fields value.
         """
-        folio_room_line_obj = self.env['folio.room.line']
+        #~ folio_room_line_obj = self.env['folio.room.line']
 #        reservation_line_obj = self.env['hotel.room.reservation.line']
-        product_obj = self.env['product.product']
-        h_room_obj = self.env['hotel.room']
-        room_lst1 = []
-        for rec in self:
-            for res in rec.room_lines:
-                room_lst1.append(res.product_id.id)
-        folio_write = super(HotelFolio, self).write(vals)
-        room_lst = []
-        for folio_obj in self:
-            for folio_rec in folio_obj.room_lines:
-                room_lst.append(folio_rec.product_id.id)
-            new_rooms = set(room_lst).difference(set(room_lst1))
-            if len(list(new_rooms)) != 0:
-                room_list = product_obj.browse(list(new_rooms))
-                for rm in room_list:
-                    room_obj = h_room_obj.search([('name', '=', rm.name)])                    
-                    vals = {'room_id': room_obj.id,
-                            'checkin': folio_obj.checkin,
-                            'checkout': folio_obj.checkout,
-                            'folio_id': folio_obj.id,
-                            }
-                    folio_room_line_obj.create(vals)
-            if len(list(new_rooms)) == 0:
-                room_list_obj = product_obj.browse(room_lst1)
-                for rom in room_list_obj:
-                    room_obj = h_room_obj.search([('name', '=', rom.name)])
-                    room_vals = {'room_id': room_obj.id,
-                                 'checkin': folio_obj.checkin,
-                                 'checkout': folio_obj.checkout,
-                                 'folio_id': folio_obj.id,
-                                 }
-                    folio_romline_rec = (folio_room_line_obj.search
-                                         ([('folio_id', '=', folio_obj.id)]))
-                    folio_romline_rec.write(room_vals)
+        #~ product_obj = self.env['product.product']
+        #~ h_room_obj = self.env['hotel.room']
+        #~ room_lst1 = []
+        #~ for rec in self:
+            #~ for res in rec.room_lines:
+                #~ room_lst1.append(res.product_id.id)
+        #~ folio_write = super(HotelFolio, self).write(vals)
+        #~ room_lst = []
+        #~ for folio_obj in self:
+            #~ for folio_rec in folio_obj.room_lines:
+                #~ room_lst.append(folio_rec.product_id.id)
+            #~ new_rooms = set(room_lst).difference(set(room_lst1))
+            #~ if len(list(new_rooms)) != 0:
+                #~ room_list = product_obj.browse(list(new_rooms))
+                #~ for rm in room_list:
+                    #~ room_obj = h_room_obj.search([('name', '=', rm.name)])
+                    #~ vals = {'room_id': room_obj.id,
+                            #~ 'checkin': folio_obj.checkin,
+                            #~ 'checkout': folio_obj.checkout,
+                            #~ 'folio_id': folio_obj.id,
+                            #~ }
+                    #~ folio_room_line_obj.create(vals)
+            #~ if len(list(new_rooms)) == 0:
+                #~ room_list_obj = product_obj.browse(room_lst1)
+                #~ for rom in room_list_obj:
+                    #~ room_obj = h_room_obj.search([('name', '=', rom.name)])
+                    #~ room_vals = {'room_id': room_obj.id,
+                                 #~ 'checkin': folio_obj.checkin,
+                                 #~ 'checkout': folio_obj.checkout,
+                                 #~ 'folio_id': folio_obj.id,
+                                 #~ }
+                    #~ folio_romline_rec = (folio_room_line_obj.search
+                                         #~ ([('folio_id', '=', folio_obj.id)]))
+                    #~ folio_romline_rec.write(room_vals)
 #            if folio_obj.reservation_id:
 #                for reservation in folio_obj.reservation_id:
 #                    reservation_obj = (reservation_line_obj.search
@@ -410,7 +410,7 @@ class HotelFolio(models.Model):
 #                                        'reservation_id': reservation.id,
 #                                        }
 #                                reservation_obj.write(vals)
-        return folio_write
+        #~ return folio_write
 
     @api.onchange('warehouse_id')
     def onchange_warehouse_id(self):

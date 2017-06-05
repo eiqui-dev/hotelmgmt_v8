@@ -105,14 +105,14 @@ class HotelReservation(models.Model):
                                 rec.checkout,
                                 DEFAULT_SERVER_DATETIME_FORMAT))
             difference_checkout = relativedelta(now_date, checkout_date)
-	    if rec.reservation_type == 'staff':
+            if rec.reservation_type == 'staff':
                 rec.reserve_color = COLOR_TYPES.get('staff')
             elif rec.reservation_type == 'out':
                 rec.reserve_color = COLOR_TYPES.get('dontsell')
             elif rec.state == 'draft':
                 rec.reserve_color = COLOR_TYPES.get('pre-reservation')
             elif rec.state == 'confirm':
-                rec.reserve_color = COLOR_TYPES.get('reservation')           
+                rec.reserve_color = COLOR_TYPES.get('reservation')
             elif rec.state == 'checkin' and difference_checkout.days == 0:
                 rec.reserve_color = COLOR_TYPES.get('checkout')
             else:
@@ -146,14 +146,15 @@ class HotelReservation(models.Model):
                                    default=_get_checkin)
     checkout = fields.Datetime('Check Out', required=True,
                                     default=_get_checkout)
-    
+
+
 #    product_uom = fields.Many2one('product.uom',string='Unit of Measure',
 #                                  required=True, default=_get_uom_id)
 
     @api.multi
     def action_reservation_checkout(self):
-	for r in self:        
-		self.state = 'done'
+        for r in self:
+            self.state = 'done'
 
     @api.model
     def create(self, vals, check=True):
@@ -168,30 +169,30 @@ class HotelReservation(models.Model):
             vals.update({'order_id': folio.order_id.id})
         return super(HotelReservation, self).create(vals)
 
-    @api.multi
-    def unlink(self):
+    #~ @api.multi
+    #~ def unlink(self):
         """
         Overrides orm unlink method.
         @param self: The object pointer
         @return: True/False.
         """
         sale_line_obj = self.env['sale.order.line']
-        fr_obj = self.env['folio.room.line']
-        for line in self:
-            if line.order_line_id:
-                sale_unlink_obj = (sale_line_obj.browse
-                                   ([line.order_line_id.id]))
-                for rec in sale_unlink_obj:
-                    room_obj = self.env['hotel.room'
-                                        ].search([('name', '=', rec.name)])
-                    if room_obj.id:
-                        folio_arg = [('folio_id', '=', line.folio_id.id),
-                                     ('room_id', '=', room_obj.id)]
-                        folio_room_line_myobj = fr_obj.search(folio_arg)
-                        if folio_room_line_myobj.id:
-                            folio_room_line_myobj.unlink()                            
-                sale_unlink_obj.unlink()
-        return super(HotelReservation, self).unlink()
+        #~ fr_obj = self.env['folio.room.line']
+        #~ for line in self:
+            #~ if line.order_line_id:
+                #~ sale_unlink_obj = (sale_line_obj.browse
+                                   #~ ([line.order_line_id.id]))
+                #~ for rec in sale_unlink_obj:
+                    #~ room_obj = self.env['hotel.room'
+                                        #~ ].search([('name', '=', rec.name)])
+                    #~ if room_obj.id:
+                        #~ folio_arg = [('folio_id', '=', line.folio_id.id),
+                                     #~ ('room_id', '=', room_obj.id)]
+                        #~ folio_room_line_myobj = fr_obj.search(folio_arg)
+                        #~ if folio_room_line_myobj.id:
+                            #~ folio_room_line_myobj.unlink()
+                #~ sale_unlink_obj.unlink()
+        #~ return super(HotelReservation, self).unlink()
 
     @api.multi
     def uos_change(self, product_uos, product_uos_qty=0, product_id=None):
@@ -244,7 +245,7 @@ class HotelReservation(models.Model):
         -----------------------------------------------------------------
         @param self: object pointer
         '''
-	domain = []
+        domain = []
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
@@ -262,20 +263,20 @@ class HotelReservation(models.Model):
             else:
                 myduration = dur.days + 1
         self.product_uom_qty = myduration
-	res = self.env['hotel.reservation'].search([
-	   	('checkin','>=',self.folio_id.date_order)		
-		])
-	res_in = self.env['hotel.reservation'].search([
-		('checkin','>=',self.checkin),
-		('checkin','<=',self.checkout)])
-	res_out = self.env['hotel.reservation'].search([
-		('checkout','>=',self.checkin),
-		('checkout','<=',self.checkout)])
-	occupied = res_in | res_out	
-	occupied &= res
-	rooms_occupied= occupied.mapped('product_id.id')
-	_logger.debug(rooms_occupied)
-	return {'domain': {'product_id': [('id', 'not in', rooms_occupied)]}}
+        res = self.env['hotel.reservation'].search([
+            ('checkin','>=',self.folio_id.date_order)
+            ])
+        res_in = self.env['hotel.reservation'].search([
+            ('checkin','>=',self.checkin),
+            ('checkin','<=',self.checkout)])
+        res_out = self.env['hotel.reservation'].search([
+            ('checkout','>=',self.checkin),
+            ('checkout','<=',self.checkout)])
+        occupied = res_in | res_out
+        occupied &= res
+        rooms_occupied= occupied.mapped('product_id.id')
+        _logger.debug(rooms_occupied)
+        return {'domain': {'product_id': [('isroom','=',True),('id', 'not in', rooms_occupied)]}}
     @api.multi
     def button_confirm(self):
         '''
@@ -313,9 +314,9 @@ class HotelReservation(models.Model):
     @api.constrains('checkin', 'checkout')
     def check_dates(self):
         """
-	1.-When date_order is less then checkin date or
+        1.-When date_order is less then checkin date or
         Checkout date should be greater than the checkin date.
-        3.-Check the reservation dates are not occuped        
+        3.-Check the reservation dates are not occuped
         """
         if self.checkin >= self.checkout:
                 raise ValidationError(_('Room line Check In Date Should be \
@@ -323,25 +324,25 @@ class HotelReservation(models.Model):
         if self.folio_id.date_order and self.checkin:
             if self.checkin <= self.folio_id.date_order:
                 raise ValidationError(_('Room line check in date should be \
-                greater than the current date.'))          
+                greater than the current date.'))
         res = self.env['hotel.reservation'].search([
-		('id','!=',self.id),
-	   	('checkin','>=',self.folio_id.date_order),
-		('product_id','=',self.product_id.id)			
-		])
-	res_in = self.env['hotel.reservation'].search([
-		('checkin','>=',self.checkin),
-		('checkin','<=',self.checkout)])
-	res_out = self.env['hotel.reservation'].search([
-		('checkout','>=',self.checkin),
-		('checkout','<=',self.checkout)])
-	occupied = res_in | res_out	
-	occupied &= res
-	occupied_name = ','.join(str(x.id) for x in occupied)
+        ('id','!=',self.id),
+        ('checkin','>=',self.folio_id.date_order),
+        ('product_id','=',self.product_id.id)
+        ])
+        res_in = self.env['hotel.reservation'].search([
+            ('checkin','>=',self.checkin),
+            ('checkin','<=',self.checkout)])
+        res_out = self.env['hotel.reservation'].search([
+            ('checkout','>=',self.checkin),
+            ('checkout','<=',self.checkout)])
+        occupied = res_in | res_out
+        occupied &= res
+        occupied_name = ','.join(str(x.id) for x in occupied)
         if occupied:
-	   warning_msg = 'You tried to confirm \
-           reservation with room those already reserved in this \
-           reservation period: %s' % occupied_name
-	   raise ValidationError(warning_msg)     
-	
+           warning_msg = 'You tried to confirm \
+               reservation with room those already reserved in this \
+               reservation period: %s' % occupied_name
+           raise ValidationError(warning_msg)
+
 

@@ -38,14 +38,12 @@ class HotelRoom(models.Model):
                                       string='Room Amenities',
                                       help='List of room amenities. ')
     capacity = fields.Integer('Capacity')
-    room_line_ids = fields.One2many('folio.room.line', 'room_id',
-                                    string='Room Reservation Line')
     shared_room = fields.Boolean('Shared Room')
     to_be_cleaned = fields.Boolean('To be Cleaned')
     virtual_rooms = fields.Many2many('hotel.virtual.room', string='Virtual Rooms')
-    
-	
-	
-	
+
+
+
+
 
 
