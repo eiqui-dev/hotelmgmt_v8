@@ -146,7 +146,9 @@ class HotelReservation(models.Model):
                                    default=_get_checkin)
     checkout = fields.Datetime('Check Out', required=True,
                                     default=_get_checkout)
-
+    room_type_id = fields.Many2one('hotel.room.type',string='Room Type')
+    virtual_room_id = fields.Many2one('hotel.virtual.room',string='Channel Room Type')
+    partner_id = fields.Many2one (related='folio_id.partner_id')
 
 #    product_uom = fields.Many2one('product.uom',string='Unit of Measure',
 #                                  required=True, default=_get_uom_id)
@@ -209,13 +211,32 @@ class HotelReservation(models.Model):
     def product_id_change(self):
         if self.product_id and self.folio_id.partner_id:
             self.name = self.product_id.name
-            self.price_unit = self.product_id.lst_price
             self.product_uom = self.product_id.uom_id
             tax_obj = self.env['account.tax']
             prod = self.product_id
             self.price_unit = tax_obj._fix_tax_included_price(prod.price,
                                                               prod.taxes_id,
                                                               self.tax_id)
+
+            #~ price_list_global = self.env['product.pricelist.item'].search([
+            #~ ('pricelist_id', '=', self.folio_id.pricelist_id.id),
+            #~ ('compute_price', '=', 'fixed'),
+            #~ ('applied_on', '=', '3_global')
+            #~ ], order='sequence ASC, id DESC', limit=1)
+            #~ date_diff = abs((date_start-date_end).days)+1
+            #~ for i in range(0, date_diff):
+                #~ ndate = date_start + timedelta(days=i)
+                #~ price_list = self.env['product.pricelist.item'].search([
+                    #~ ('pricelist_id', '=', self.folio_id.pricelist_id.id),
+                    #~ ('applied_on', '=', '2_product_category'),
+                    #~ ('categ_id', '=', cat.id),
+                    #~ ('date_start', '<=', ndate.replace(hour=0, minute=0, second=0).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    #~ ('date_end', '>=', ndate.replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    #~ ('compute_price', '=', 'fixed'),
+                #~ ], order='sequence ASC, id DESC', limit=1)
+                #~ price_day = self.product_id.lst_price
+
+
 
     @api.onchange('product_uom')
     def product_uom_change(self):
@@ -237,7 +258,9 @@ class HotelReservation(models.Model):
                                                               prod.taxes_id,
                                                               self.tax_id)
 
-    @api.onchange('checkin', 'checkout')
+
+
+    @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id')
     def on_change_checkout(self):
         '''
         When you change checkin or checkout it will checked it
@@ -245,7 +268,6 @@ class HotelReservation(models.Model):
         -----------------------------------------------------------------
         @param self: object pointer
         '''
-        domain = []
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
@@ -264,19 +286,33 @@ class HotelReservation(models.Model):
                 myduration = dur.days + 1
         self.product_uom_qty = myduration
         res = self.env['hotel.reservation'].search([
-            ('checkin','>=',self.folio_id.date_order)
+            ('checkin','>=',self.folio_id.date_order),
+            ('checkout','>=',self.checkin),
+            ('checkin','<=',self.checkout)
             ])
-        res_in = self.env['hotel.reservation'].search([
+        res_in = res.search([
             ('checkin','>=',self.checkin),
             ('checkin','<=',self.checkout)])
-        res_out = self.env['hotel.reservation'].search([
+        res_out = res.search([
             ('checkout','>=',self.checkin),
             ('checkout','<=',self.checkout)])
-        occupied = res_in | res_out
+        res_full = res.search([
+            ('checkin','<',self.checkin),
+            ('checkout','>',self.checkout)])
+        occupied = res_in | res_out | res_full
         occupied &= res
         rooms_occupied= occupied.mapped('product_id.id')
-        _logger.debug(rooms_occupied)
-        return {'domain': {'product_id': [('isroom','=',True),('id', 'not in', rooms_occupied)]}}
+        domain_rooms = [('isroom','=',True),('id', 'not in', rooms_occupied)]
+        if self.room_type_id:
+            domain_rooms.append(('categ_id.id', '=', self.room_type_id.cat_id.id))
+        if self.virtual_room_id:
+            room_categories = self.virtual_room_id.room_type_ids.mapped('cat_id.id')
+            link_virtual_rooms = self.virtual_room_id.room_ids | self.env['hotel.room'].search([('categ_id.id','in',room_categories)])
+            room_ids = link_virtual_rooms.mapped('product_id.id')
+            domain_rooms.append(('id','in',room_ids))
+        return {'domain': {'product_id': domain_rooms}}
+
+
     @api.multi
     def button_confirm(self):
         '''

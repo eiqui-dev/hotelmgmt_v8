@@ -205,6 +205,28 @@ class HotelFolio(models.Model):
     currrency_ids = fields.One2many('currency.exchange', 'folio_no',
                                     readonly=True)
     hotel_invoice_id = fields.Many2one('account.invoice', 'Invoice')
+    cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
+    cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
+    cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
+
+    @api.multi
+    def _compute_cardex_count(self):
+        num_cardex = 0
+        for reser in self.room_lines:
+            num_cardex += len(reser.cardex_ids)
+        self.cardex_count = num_cardex
+
+    @api.multi
+    def _compute_cardex_pending(self):
+        pending = 0
+        for reser in self.room_lines:
+            pending = reser.adults + reser.children - len(reser.cardex_ids)
+        if pending <= 0:
+            self.cardex_pending = False
+        else:
+            self.cardex_pending = True
+        self.cardex_pending_num = pending
+
 
     @api.multi
     def go_to_currency_exchange(self):
@@ -519,6 +541,8 @@ class HotelFolio(models.Model):
         for order in self.order_id:
             order.state = 'sale'
             order.order_line._action_procurement_create()
+            for room in self.room_lines:
+                room.write({'state': 'confirm'})
             if not order.project_id:
                 for line in order.order_line:
                     if line.product_id.invoice_policy == 'cost':
