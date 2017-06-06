@@ -32,7 +32,7 @@
                             <button name="go_to_currency_exchange" string="Money Exchange"
                                 icon="fa-refresh" class="oe_stat_button" type="object" />
                         </div>-->
-                       <button type="action" class="oe_stat_button oe_right"
+                      <!-- <button type="action" class="oe_stat_button oe_right"
                             id="cardex_smart_button"
                             icon="fa-user-plus"
                             name="%(alda_pms.launch_checkin_wizard)d"
@@ -53,7 +53,7 @@
                                 <field name="cardex_count"
                                 string="Checks" widget="statinfo"/>
                             </div>
-                        </button>
+                        </button>-->
                         <label string="Folio Number" />
                         <h1>
                             <field name="name" colspan="4" />
