@@ -158,6 +158,7 @@ class HotelReservation(models.Model):
         for r in self:
             self.state = 'done'
 
+
     @api.model
     def create(self, vals, check=True):
         """

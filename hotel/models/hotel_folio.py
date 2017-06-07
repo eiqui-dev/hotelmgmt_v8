@@ -205,9 +205,81 @@ class HotelFolio(models.Model):
     currrency_ids = fields.One2many('currency.exchange', 'folio_no',
                                     readonly=True)
     hotel_invoice_id = fields.Many2one('account.invoice', 'Invoice')
+    invoices_amount = fields.Integer(compute='_compute_invoices_amount')
+    booking_pending = fields.Integer ('Booking pending', compute='_compute_booking_pending')
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
+    checkins_reservations = fields.Boolean(compute='_compute_checkins')
+    checkouts_reservations = fields.Boolean(compute='_compute_checkouts')
+
+    @api.multi
+    def _compute_checkins(self):
+        date_str = date.strftime(tools.DEFAULT_SERVER_DATE_FORMAT)
+        now_str = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        for fol in self:
+            for line in fol.room_lines:
+                checkin_dt = datetime.datetime.strptime(line.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
+                checkin_str = checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                if checkin_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
+                    fol.checkins_reservations = True
+
+    @api.multi
+    def _compute_checkouts(self):
+        date_str = date.strftime(tools.DEFAULT_SERVER_DATE_FORMAT)
+        now_str = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        for fol in self:
+            for line in fol.room_lines:
+                checkout_dt = datetime.datetime.strptime(line.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
+                checkout_str = checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                if checkout_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
+                    fol.checkout_reservations = True
+
+    @api.multi
+    def _compute_invoices_amount(self):
+        self.ensure_one()
+        inv_pending = 0
+        total_inv = 0
+        total_folio = self.amount_total
+        for inv in self.invoice_ids:
+            if inv.state == 'draft':
+                total_inv += inv.amount_total
+                inv_pending += inv.amount_total
+            else:
+                total_inv += inv.amount_total
+                inv_pending += inv.residual
+        if total_inv < total_folio:
+            inv_pending += total_folio
+        self.invoices_amount = inv_pending
+
+
+
+    @api.multi
+    def action_invoices(self):
+        self.ensure_one()
+        invoices = self.mapped('invoice_ids.id')
+        return{
+        'name': _('Invoices'),
+        'view_type': 'form',
+        'view_mode': 'tree,form',
+        'res_model': 'account.invoice',
+        'type': 'ir.actions.act_window',
+        'domain': [('id','in', invoices)]
+        }
+
+
+    @api.multi
+    def action_checks(self):
+        self.ensure_one()
+        rooms = self.mapped('room_lines.id')
+        return {
+        'name': _('Cardexs'),
+        'view_type': 'form',
+        'view_mode': 'tree,form',
+        'res_model': 'cardex',
+        'type': 'ir.actions.act_window',
+        'domain': [('reservation_id','in', rooms)]
+        }
 
     @api.multi
     def _compute_cardex_count(self):
@@ -220,7 +292,7 @@ class HotelFolio(models.Model):
     def _compute_cardex_pending(self):
         pending = 0
         for reser in self.room_lines:
-            pending = reser.adults + reser.children - len(reser.cardex_ids)
+            pending += reser.adults + reser.children - len(reser.cardex_ids)
         if pending <= 0:
             self.cardex_pending = False
         else:
@@ -464,6 +536,7 @@ class HotelFolio(models.Model):
                 self.partner_invoice_id = partner_rec.id
                 self.partner_shipping_id = partner_rec.id
                 self.pricelist_id = partner_rec.property_product_pricelist.id
+        self.currency_id = self.env.ref('base.main_company').currency_id
 
     @api.multi
     def button_dummy(self):
