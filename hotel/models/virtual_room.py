@@ -32,35 +32,35 @@ import time
 class VirtualRoom(models.Model):
     _name ='hotel.virtual.room'
     _inherits = {'product.product':'product_id'}
-    
+
     @api.depends('room_ids','room_type_ids')
     def _compute_total_rooms(self):
-	for r in self:
-		count = 0
-		count += len(r.room_ids) #Rooms linked directly
-		room_categories	= r.room_type_ids.mapped('cat_id.id') 		 
-		count += self.env['hotel.room'].search_count([('categ_id.id','in',room_categories)])#Rooms linked through room type
-		r.total_rooms_count = count
-    
+    for r in self:
+        count = 0
+        count += len(r.room_ids) #Rooms linked directly
+        room_categories = r.room_type_ids.mapped('cat_id.id')
+        count += self.env['hotel.room'].search_count([('categ_id.id','in',room_categories)])#Rooms linked through room type
+        r.total_rooms_count = count
+
     @api.constrains('room_ids','room_type_ids')
     def _check_duplicated_rooms(self):
-	warning_msg = ""
-	for r in self:
-		room_categories	= self.room_type_ids.mapped('cat_id.id')
-		if self.room_ids & self.env['hotel.room'].search([('categ_id.id','in',room_categories)]):
-			room_ids = self.room_ids & self.env['hotel.room'].search([('categ_id.id','in',room_categories)]) 
-			rooms_name = ','.join(str(x.name) for x in room_ids)
-			warning_msg += 'You can not enter the same room in duplicate (check the room types) %s' % rooms_name
-			raise models.ValidationError(warning_msg)
+    warning_msg = ""
+    for r in self:
+        room_categories = self.room_type_ids.mapped('cat_id.id')
+        if self.room_ids & self.env['hotel.room'].search([('categ_id.id','in',room_categories)]):
+            room_ids = self.room_ids & self.env['hotel.room'].search([('categ_id.id','in',room_categories)])
+            rooms_name = ','.join(str(x.name) for x in room_ids)
+            warning_msg += 'You can not enter the same room in duplicate (check the room types) %s' % rooms_name
+            raise models.ValidationError(warning_msg)
 
     @api.constrains('max_real_rooms','room_ids','room_type_ids')
     def _check_max_rooms(self):
-	warning_msg = ""
-	for r in self:
-		if self.max_real_rooms > self.total_rooms_count:
-			warning_msg += 'The Maxime rooms allowed can not be greate than total rooms count'
-			raise models.ValidationError(warning_msg)
-    
+    warning_msg = ""
+    for r in self:
+        if self.max_real_rooms > self.total_rooms_count:
+            warning_msg += 'The Maxime rooms allowed can not be greate than total rooms count'
+            raise models.ValidationError(warning_msg)
+
     virtual_code = fields.Char('Code')
     room_ids = fields.Many2many('hotel.room',string='Rooms')
     room_type_ids = fields.Many2many('hotel.room.type',string='Room Types')
@@ -71,13 +71,42 @@ class VirtualRoom(models.Model):
     service_ids = fields.Many2many('hotel.services',string='Included Services')
     max_real_rooms = fields.Integer('Max Room Allowed')
     product_id = fields.Many2one(
-		'product.product',
-		ondelete='cascade')
-    
-    
-    
-    
-    
-    
+        'product.product',
+        ondelete='cascade')
 
-    
+    @api.model
+    def check_availability_virtual_room(checkin, checkout, virtual_room_id = False):
+        res = self.env['hotel.reservation'].search([
+            ('checkout','>=',checkin),
+            ('checkin','<=',checkout)
+            ])
+        res_in = res.search([
+            ('checkin','>=',checkin),
+            ('checkin','<=',checkout)])
+        res_out = res.search([
+            ('checkout','>=',checkin),
+            ('checkout','<=',checkout)])
+        res_full = res.search([
+            ('checkin','<',checkin),
+            ('checkout','>',checkout)])
+        occupied = res_in | res_out | res_full
+        occupied &= res
+        rooms_occupied= occupied.mapped('product_id.id')
+        free_rooms = self.env['hotel.room'].search([('product_id.id','not in',rooms_occupied)])
+        if virtual_room_id:
+            virtual_room = self.env['hotel.virtual.room'].search([('id','=',virtual_room_id)])
+            room_categories = virtual_room.room_type_ids.mapped('cat_id.id')
+            rooms_linked = virtual_room.room_ids | self.env['hotel.room'].search([('categ_id.id','in',room_categories)])
+            free_rooms = free_rooms & rooms_linked
+        return free_rooms
+
+
+
+
+
+
+
+
+
+
+
