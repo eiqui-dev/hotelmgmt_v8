@@ -75,7 +75,7 @@ class VirtualRoom(models.Model):
         ondelete='cascade')
 
     @api.model
-    def check_availability_virtual_room(checkin, checkout, virtual_room_id = False):
+    def check_availability_virtual_room(self,checkin, checkout, virtual_room_id = False):
         res = self.env['hotel.reservation'].search([
             ('checkout','>=',checkin),
             ('checkin','<=',checkout)
