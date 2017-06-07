@@ -210,8 +210,8 @@ class HotelFolio(models.Model):
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
-    checkins_reservations = fields.Boolean(compute='_compute_checkins')
-    checkouts_reservations = fields.Boolean(compute='_compute_checkouts')
+    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins')
+    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts')
 
     @api.multi
     def _compute_checkins(self):
