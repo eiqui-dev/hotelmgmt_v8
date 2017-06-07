@@ -61,18 +61,18 @@ class VirtualRoom(models.Model):
                 warning_msg += 'The Maxime rooms allowed can not be greate than total rooms count'
                 raise models.ValidationError(warning_msg)
 
-        virtual_code = fields.Char('Code')
-        room_ids = fields.Many2many('hotel.room',string='Rooms')
-        room_type_ids = fields.Many2many('hotel.room.type',string='Room Types')
-        total_rooms_count = fields.Integer(compute='_compute_total_rooms')
-        product_id = fields.Many2one('product.product', 'Product_id',
-                                     required=True, delegate=True,
-                                     ondelete='cascade')
-        service_ids = fields.Many2many('hotel.services',string='Included Services')
-        max_real_rooms = fields.Integer('Max Room Allowed')
-        product_id = fields.Many2one(
-            'product.product',
-            ondelete='cascade')
+    virtual_code = fields.Char('Code')
+    room_ids = fields.Many2many('hotel.room',string='Rooms')
+    room_type_ids = fields.Many2many('hotel.room.type',string='Room Types')
+    total_rooms_count = fields.Integer(compute='_compute_total_rooms')
+    product_id = fields.Many2one('product.product', 'Product_id',
+                                 required=True, delegate=True,
+                                 ondelete='cascade')
+    service_ids = fields.Many2many('hotel.services',string='Included Services')
+    max_real_rooms = fields.Integer('Max Room Allowed')
+    product_id = fields.Many2one(
+        'product.product',
+        ondelete='cascade')
 
     @api.model
     def check_availability_virtual_room(self,checkin, checkout, virtual_room_id = False):
