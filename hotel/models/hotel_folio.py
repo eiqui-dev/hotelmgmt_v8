@@ -344,21 +344,21 @@ class HotelFolio(models.Model):
                 raise ValidationError(_('You Cannot Take Same Room Twice'))
             folio_rooms.append(room.product_id.id)
 
-    @api.constrains('checkin', 'checkout')
-    def check_dates(self):
-        '''
-        This method is used to validate the checkin and checkout.
-        -------------------------------------------------------------------
-        @param self: object pointer
-        @return: raise warning depending on the validation
-        '''
-        if self.checkin >= self.checkout:
-                raise ValidationError(_('Check in Date Should be \
-                less than the Check Out Date!'))
-        if self.date_order and self.checkin:
-            if self.checkin < self.date_order:
-                raise ValidationError(_('Check in date should be \
-                greater than the current date.'))
+#     @api.constrains('checkin', 'checkout')
+#     def check_dates(self):
+#         '''
+#         This method is used to validate the checkin and checkout.
+#         -------------------------------------------------------------------
+#         @param self: object pointer
+#         @return: raise warning depending on the validation
+#         '''
+#         if self.checkin >= self.checkout:
+#                 raise ValidationError(_('Check in Date Should be \
+#                 less than the Check Out Date!'))
+#         if self.date_order and self.checkin:
+#             if self.checkin < self.date_order:
+#                 raise ValidationError(_('Check in date should be \
+#                 greater than the current date.'))
 
     @api.onchange('checkout', 'checkin')
     def onchange_dates(self):
