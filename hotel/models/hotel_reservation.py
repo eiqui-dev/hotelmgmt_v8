@@ -17,12 +17,12 @@
 #
 # ---------------------------------------------------------------------------
 from openerp.exceptions import except_orm, UserError, ValidationError
-from openerp.tools import misc, DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.tools import misc, DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 from openerp import models, fields, api, _
 from openerp import workflow
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
-import datetime
+from datetime import datetime, timedelta
 import urllib2
 import time
 import logging
@@ -95,13 +95,13 @@ class HotelReservation(models.Model):
     def _compute_color(self):
         now_str = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         for rec in self:
-            now_date = datetime.datetime.strptime(now_str,
+            now_date = datetime.strptime(now_str,
                                                   DEFAULT_SERVER_DATETIME_FORMAT)
-            checkin_date = (datetime.datetime.strptime(
+            checkin_date = (datetime.strptime(
                                 rec.checkin,
                                 DEFAULT_SERVER_DATETIME_FORMAT))
             difference_checkin = relativedelta(now_date, checkin_date)
-            checkout_date = (datetime.datetime.strptime(
+            checkout_date = (datetime.strptime(
                                 rec.checkout,
                                 DEFAULT_SERVER_DATETIME_FORMAT))
             difference_checkout = relativedelta(now_date, checkout_date)
@@ -127,7 +127,8 @@ class HotelReservation(models.Model):
                               help='Number of children there in guest list.')
     to_assign = fields.Boolean('To Assign')
     state = fields.Selection([('draft', 'Draft'), ('confirm', 'Confirm'),
-                              ('booking', 'Booking'), ('done', 'Done')],
+                              ('booking', 'Booking'), ('done', 'Done'),
+                              ('cancelled', 'Cancelled')],
                              'State', readonly=True,
                              default=lambda *a: 'draft')
     reservation_type = fields.Selection([
@@ -149,9 +150,19 @@ class HotelReservation(models.Model):
     room_type_id = fields.Many2one('hotel.room.type',string='Room Type')
     virtual_room_id = fields.Many2one('hotel.virtual.room',string='Channel Room Type')
     partner_id = fields.Many2one (related='folio_id.partner_id')
+    reservation_lines = fields.One2many('hotel.reservation.line',
+                                        'reservation_id',
+                                        readonly=True,
+                                        states={'draft': [('readonly', False)],
+                                                'sent': [('readonly', False)]})
 
 #    product_uom = fields.Many2one('product.uom',string='Unit of Measure',
 #                                  required=True, default=_get_uom_id)
+
+    @api.multi
+    def action_cancel(self):
+        for record in self:
+            _logger.info("CANCEL")
 
     @api.multi
     def action_reservation_checkout(self):
@@ -259,7 +270,12 @@ class HotelReservation(models.Model):
                                                               prod.taxes_id,
                                                               self.tax_id)
 
-
+    @api.onchange('reservation_lines')
+    def on_change_reservation_lines(self):
+        total_price = 0.0
+        for line in self.reservation_lines:
+            total_price += line.price
+        self.price_unit = total_price
 
     @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id')
     def on_change_checkout(self):
@@ -277,14 +293,26 @@ class HotelReservation(models.Model):
         checkout = self.checkout
         if checkin and checkout:
             server_dt = DEFAULT_SERVER_DATETIME_FORMAT
-            chkin_dt = datetime.datetime.strptime(checkin, server_dt)
-            chkout_dt = datetime.datetime.strptime(checkout, server_dt)
+            chkin_dt = datetime.strptime(checkin, server_dt)
+            chkout_dt = datetime.strptime(checkout, server_dt)
             dur = chkout_dt - chkin_dt
             sec_dur = dur.seconds
             if (not dur.days and not sec_dur) or (dur.days and not sec_dur):
                 myduration = dur.days
             else:
                 myduration = dur.days + 1
+            # Generate Reservation Lines
+            total_price = 0.0
+            cmds = [(5, False, False)]
+            for i in range(0, dur.days):
+                ndate = chkin_dt + timedelta(days=i)
+                cmds.append((0, False, {
+                    'date': ndate.strftime(DEFAULT_SERVER_DATE_FORMAT),
+                    'price': self.product_id.list_price
+                }))
+                total_price += self.product_id.list_price
+            self.reservation_lines = cmds
+            self.price_unit = total_price
         self.product_uom_qty = myduration
         res = self.env['hotel.reservation'].search([
             ('checkin','>=',self.folio_id.date_order),
