@@ -101,7 +101,7 @@
                                     <field name="checkout" />
                                     <field name="duration" />
                                 </group>
-                                <separator string="Room Lines" colspan="4" />
+                                <separator string="Room Lines" id="room_lines_separator" colspan="4" />
                                 <field name="room_lines" colspan="4" string="Room Line"
                                     nolabel="1" context="{'checkin':checkin,'checkout':checkout}">
                                     <tree string="Room Line">
