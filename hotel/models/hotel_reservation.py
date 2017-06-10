@@ -162,7 +162,8 @@ class HotelReservation(models.Model):
     @api.multi
     def action_cancel(self):
         for record in self:
-            _logger.info("CANCEL")
+            record.write({'state': 'cancelled'})
+            _logger.info("CANCEL RESERVATION!")
 
     @api.multi
     def action_reservation_checkout(self):
