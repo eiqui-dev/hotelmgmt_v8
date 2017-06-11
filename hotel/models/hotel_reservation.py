@@ -277,7 +277,6 @@ class HotelReservation(models.Model):
 
     @api.onchange('checkin', 'checkout', 'product_id')
     def on_change_checkin_checkout_product_id(self):
-        user_id = self.env['res.users'].browse(self.env.uid)
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
@@ -293,11 +292,11 @@ class HotelReservation(models.Model):
             ndate = chkin_dt + timedelta(days=i)
             ndate_str = ndate.strftime(DEFAULT_SERVER_DATE_FORMAT)
             product_id = self.product_id.with_context(
-                lang=user_id.partner_id.lang,
-                partner=user_id.partner_id.id,
+                lang=self.order_partner_id.lang,
+                partner=self.order_partner_id.id,
                 quantity=1,
                 date_order=ndate_str,
-                pricelist=user_id.partner_id.property_product_pricelist.id)
+                pricelist=self.order_id.pricelist_id.id)
             line_price = product_id.list_price
             cmds.append((0, False, {
                 'date': ndate_str,
