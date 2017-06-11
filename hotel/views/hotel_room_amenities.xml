@@ -107,7 +107,7 @@
             <field name="res_model">hotel.room.amenities</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="context">{'default_iscategid':1,'default_available_in_pos':0}
+            <field name="context">{'default_iscategid':1}
             </field>
             <field name="view_id" ref="view_hotel_room_amenities_list" />
         </record>
@@ -115,9 +115,9 @@
             action="action_hotel_room_amenities_view_form" sequence="2"
             parent="hotel.menu_amenity" />
 
-	<!-- Amenities Categories -->
+    <!-- Amenities Categories -->
 
-	<record model="ir.actions.act_window" id="hotel_ty_category_action">
+    <record model="ir.actions.act_window" id="hotel_ty_category_action">
             <field name="name">Amenities by Category</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">product.category</field>
@@ -133,7 +133,7 @@
             <field name="name">Amenities</field>
             <field eval="'ir.actions.act_window,%d'%action_room_cate" name="value"/>
         </record>
-        
+
         <menuitem name="Amenities by Type" id="menu_hotel_ty_category_action"
             action="hotel_ty_category_action" sequence="4" parent="hotel.menu_amenity" />
 

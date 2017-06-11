@@ -20,8 +20,8 @@
                                 <field name="name" select="1" />
                             </h1>
                             <label for="to_be_cleaned" string="To be Cleaned" />
-			    <h2>
-			    <field name="to_be_cleaned"/> 
+                <h2>
+                <field name="to_be_cleaned"/>
                             </h2>
                         </div>
                         <notebook>
@@ -31,12 +31,12 @@
                                     <field name="categ_id" select="1" domain="[('isroomtype','=',True)]" />
                                     <field name="product_manager" select="2" string="Room Manager" />
                                     <field name="capacity" />
-				    <field name="shared_room" help="It allows several reservations on the same room simultaneously based on the capacity of people"/>                 	                                  
+                    <field name="shared_room" help="It allows several reservations on the same room simultaneously based on the capacity of people"/>
                                     <field name="uom_id" invisible="1" />
-				    <field name="active" select="2" />
+                    <field name="active" select="2" />
                                     <field name="list_price" />
                                 </group>
-                                <newline />                                
+                                <newline />
                                 <separator colspan='4' string="Customer Taxes" />
                                 <field name="taxes_id" colspan="4" nolabel='1'
                                     help='Customer taxes apply on the perticular room. ' />
@@ -44,11 +44,11 @@
                             <page string="Room Amenities">
                                 <separator string=" Room Amenities" />
                                 <field name="room_amenities" colspan="4" nolabel="1" />
-                            </page>                           
+                            </page>
                             <page string="Descriptions">
                                 <separator string="Description" />
                                 <field name="description" colspan="4" nolabel="1" />
-                            </page>                           
+                            </page>
                         </notebook>
                     </sheet>
                 </form>
@@ -82,7 +82,7 @@
                 <tree string="Hotel Room">
                     <field name="name" />
                     <field name="categ_id" select="1" />
-                    <field name="list_price" string="Room rate" />                   
+                    <field name="list_price" string="Room rate" />
                     <field name="capacity" />
                 </tree>
             </field>
@@ -93,7 +93,7 @@
             <field name="model">hotel.room</field>
             <field name="arch" type="xml">
                 <kanban>
-                    <field name="name" /> 
+                    <field name="name" />
                     <field name="lst_price" />
                     <templates>
                         <t t-name="kanban-box">
@@ -135,7 +135,7 @@
                                             </H3>
                                         </div>
                                         <div name="tags" />
-                                        <ul>                                            
+                                        <ul>
                                             <li>
                                                 Rate:
                                                 <field name="lst_price"></field>
@@ -145,7 +145,7 @@
                                                 <field name="capacity"></field>
                                             </li>
                                         </ul>
-                                    </div>                                    
+                                    </div>
                                 </div>
                                 <div class="oe_clear"></div>
                             </div>
@@ -161,7 +161,7 @@
             <field name="name">Hotel Room</field>
             <field name="res_model">hotel.room</field>
             <field name="view_type">form</field>
-            <field name="context">{'default_isroom':1,'default_rental':1,'default_available_in_pos':0}
+            <field name="context">{'default_isroom':1,'default_rental':1}
             </field>
             <field name="view_id" ref="view_hotel_room_tree" />
             <field name="view_mode">kanban,tree,form</field>
@@ -170,7 +170,7 @@
         <menuitem name="Rooms" id="menu_open_hotel_room_form" action="action_hotel_room_form"
             sequence="5" parent="hotel.menu_hotel_room" />
 
-	<!-- Room Categories -->
+    <!-- Room Categories -->
 
         <record id="product_category_tree_view" model="ir.ui.view">
             <field name="name">product.category.tree</field>
@@ -207,7 +207,7 @@
             <field name="name">Rooms</field>
             <field eval="'ir.actions.act_window,%d'%action_room_cate" name="value"/>
         </record>
-        
+
         <menuitem name="Room by Type" id="menu_hotel_room_category_action"
             action="hotel_room_category_action" sequence="7" parent="hotel.menu_hotel_room" />
 

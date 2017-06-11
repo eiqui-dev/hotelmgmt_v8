@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-# --------------------------------------------------------------------------
+##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012-Today Serpent Consulting Services PVT. LTD.
-#    (<http://www.serpentcs.com>)
+#    Copyright (C) 2017 Solucións Aloxa S.L. <info@aloxa.eu>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,10 +15,11 @@
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# ---------------------------------------------------------------------------
+##############################################################################
 
-from . import hotel_wizard
-from . import sale_make_invoice_advance
-from . import checkinwizard
+from . import category
+from . import code_ine
+from . import inherit_res_company
+from . import inherit_res_partner
