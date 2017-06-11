@@ -111,8 +111,6 @@
                                         <field name="price_subtotal" />
                                         <field name="state" />
                                         <field name="partner_id" invisible="1"/>
-                                 <!--       <button type="action" class="oe_stat_button" id="cardex_smart_button_2" icon="fa-file-pdf-o" name="%(alda_pms.action_report_viajero)d" context="{'partner_id': partner_id,'enter_date': checkin,'exit_date': checkout,'reserva_id': id, 'hidden_cardex': True, 'edit_cardex': True }"/>
-                                        <button type="action" class="oe_stat_button" id="cardex_smart_button" icon="fa-bed" name="%(alda_pms.launch_checkin_wizard_add)d" context="{'partner_id': partner_id,'enter_date': checkin,'exit_date': checkout,'reserva_id': id, 'hidden_cardex': True, 'edit_cardex': True }"/>-->
                                     </tree>
                                 </field>
                                 <separator string="Service Lines" colspan="4" />
