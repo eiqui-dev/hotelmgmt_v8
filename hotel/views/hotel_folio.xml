@@ -59,7 +59,7 @@
                             </button>
                             <field name="currency_id" invisible="1"/>
 
-                            <button type="object" class="oe_stat_button"
+<!--                            <button type="object" class="oe_stat_button"
                                 id="invoices_smart_button"
                                 icon="fa-money"
                                 name="action_invoices"
@@ -71,7 +71,7 @@
                                     </span>
                                     <span class="o_stat_text">Pending Payment</span>
                                 </div>
-                            </button>
+                            </button>-->
 
                         </div>
 
@@ -101,7 +101,7 @@
                                     <field name="checkout" />
                                     <field name="duration" />
                                 </group>
-                                <separator string="Room Lines" colspan="4" />
+                                <separator string="Room Lines" id="room_lines_separator" colspan="4" />
                                 <field name="room_lines" colspan="4" string="Room Line"
                                     nolabel="1" context="{'checkin':checkin,'checkout':checkout}">
                                     <tree string="Room Line">

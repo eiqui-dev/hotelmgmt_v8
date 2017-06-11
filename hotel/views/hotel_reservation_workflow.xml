@@ -35,6 +35,13 @@
             <field name="kind">function</field>
             <field name="action">action_reservation_checkin()</field>
         </record>
+        <record model="workflow.activity" id="act_cancelled">
+            <field name="wkf_id" ref="wkf_reservation"/>
+            <field name="name">cancelled</field>
+            <field name="flow_stop">True</field>
+            <field name="kind">function</field>
+            <field name="action">action_cancel()</field>
+        </record>
 
         <!--
           Transition
