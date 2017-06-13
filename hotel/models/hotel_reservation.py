@@ -23,7 +23,7 @@ from openerp import workflow
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
-import urllib2
+import pytz
 import time
 import logging
 _logger = logging.getLogger(__name__)
@@ -296,9 +296,9 @@ class HotelReservation(models.Model):
         if not self.checkout:
             self.checkout = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         chkin_dt = datetime.strptime(self.checkin,
-                                     DEFAULT_SERVER_DATETIME_FORMAT)
+                                     DEFAULT_SERVER_DATETIME_FORMAT).astimezone(pytz.utc)
         chkout_dt = datetime.strptime(self.checkout,
-                                      DEFAULT_SERVER_DATETIME_FORMAT)
+                                      DEFAULT_SERVER_DATETIME_FORMAT).astimezone(pytz.utc)
         days_diff = (chkout_dt - chkin_dt).days
         total_price = 0.0
         cmds = [(5, False, False)]
