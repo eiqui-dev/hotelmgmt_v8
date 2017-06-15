@@ -372,6 +372,8 @@ class HotelReservation(models.Model):
     @api.onchange('checkin', 'checkout', 'product_id')
     def on_change_checkin_checkout_product_id(self):
         _logger.info("PASA ONCHANGE 1")
+        _logger.info(self.checkin)
+        _logger.info(self.checkout)
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
