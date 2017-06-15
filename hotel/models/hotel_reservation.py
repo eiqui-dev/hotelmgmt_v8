@@ -291,35 +291,46 @@ class HotelReservation(models.Model):
 
     @api.onchange('checkin', 'checkout', 'product_id')
     def on_change_checkin_checkout_product_id(self):
+        _logger.info("PASA ONCHANGE 1")
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
             self.checkout = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
 
+        _logger.info("PASA ONCHANGE 2")
         if self._context.get('regenerate', True):
+            _logger.info("PASA ONCHANGE 3")
             # UTC -> Local
             chkin_dt = fields.Datetime.from_string(self.checkin).replace(tzinfo=pytz.utc).astimezone(pytz.timezone(self._context.get('tz')))
             chkout_dt = fields.Datetime.from_string(self.checkout).replace(tzinfo=pytz.utc).astimezone(pytz.timezone(self._context.get('tz')))
             days_diff = (chkout_dt - chkin_dt).days
-            total_price = 0.0
-            cmds = [(5, False, False)]
-            for i in range(0, days_diff):
-                ndate = chkin_dt + timedelta(days=i)
-                ndate_str = ndate.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                product_id = self.product_id.with_context(
-                    lang=self.order_partner_id.lang,
-                    partner=self.order_partner_id.id,
-                    quantity=1,
-                    date_order=ndate_str,
-                    pricelist=self.order_id.pricelist_id.id)
-                line_price = product_id.list_price
-                cmds.append((0, False, {
-                    'date': ndate_str,
-                    'price': line_price
-                }))
-                total_price += line_price
-            self.reservation_lines = cmds
-            self.price_unit = total_price
+            res = self.prepare_reservation_lines(chkin_dt, days_diff)
+            self.reservation_lines = res['commands']
+            self.price_unit = res['total_price']
+            _logger.info("PASA ONCHANGE 4")
+            _logger.info(res['commands'])
+        _logger.info("PASA ONCHANGE 5")
+
+    @api.model
+    def prepare_reservation_lines(self, datefrom, days):
+        total_price = 0.0
+        cmds = [(5, False, False)]
+        for i in range(0, days):
+            ndate = datefrom + timedelta(days=i)
+            ndate_str = ndate.strftime(DEFAULT_SERVER_DATE_FORMAT)
+            product_id = self.product_id.with_context(
+                lang=self.order_partner_id.lang,
+                partner=self.order_partner_id.id,
+                quantity=1,
+                date_order=ndate_str,
+                pricelist=self.order_id.pricelist_id.id)
+            line_price = product_id.list_price
+            cmds.append((0, False, {
+                'date': ndate_str,
+                'price': line_price
+            }))
+            total_price += line_price
+        return {'total_price': total_price, 'commands': cmds}
 
     @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id')
     def on_change_checkout(self):
