@@ -46,6 +46,7 @@
         'views/hotel_floor.xml',
         'views/hotel_folio.xml',
         'views/hotel_service_type.xml',
+        'views/hotel_service_line.xml',
         'views/hotel_room_type.xml',
         'views/hotel_room.xml',
         'views/hotel_service.xml',

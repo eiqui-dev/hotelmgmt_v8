@@ -25,7 +25,7 @@ from openerp import models, fields, api, _
 class HotelFloor(models.Model):
 
     _name = "hotel.floor"
-    _description = "Floor"
+    _description = "Ubication"
 
-    name = fields.Char('Floor Name', size=64, required=True, select=True)
+    name = fields.Char('Ubication Name', size=64, required=True, select=True)
     sequence = fields.Integer('Sequence', size=64)

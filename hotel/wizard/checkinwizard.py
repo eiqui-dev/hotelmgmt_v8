@@ -84,21 +84,20 @@ class Wizard(models.TransientModel):
     # or you can use @api.model for processing only one object
     @api.multi
     def action_save_check(self):
-        for r in self:
-            cardex_val={
-              'partner_id':r.partner_id.id,
-              'ent  er_date':r.enter_date,
-              'exit_date':r.exit_date}
-            record_id = r.env[r._context.get('active_model')].browse(r._context.get('active_id'))
-            record_id.write({'cardex_ids':[(0,False,cardex_val)]})
-        if r.reservation_id.cardex_count > 0:
-            r.reservation_id.state = 'booking'
-        return True
+        cardex_val={
+          'partner_id':self.partner_id.id,
+          'enter_date':self.enter_date,
+          'exit_date':self.exit_date}
+        record_id = self.env['hotel.reservation'].browse(self.reservation_id.id)
+        record_id.write({
+           'cardex_ids':[(0,False,cardex_val)]})
+        if record_id.cardex_count > 0:
+            record_id.state = 'booking'
+        return
 
     @api.multi
     def action_update_check(self):
-
-        record_id = self.env['hotel.reservation'].browse(self.reservation_id)
+        record_id = self.env['hotel.reservation'].browse(self.reservation_id.id)
         record_id.write({
           'partner_id':self.partner_id.id,
           'enter_date':self.enter_date,

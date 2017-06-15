@@ -8,7 +8,7 @@
             <field name="model">checkin.wizard</field>
             <field name="inherit_id" ref="hotel.checkin_wizard_form_2" />
             <field name="arch" type="xml">
-                <xpath expr="//group/field[@name='mobile_cardex']" position="after">
+                <xpath expr="//footer" position="before">
                     <group col="4">
                         <field name="firstname_cardex" colspan="2"/>
                         <field name="lastname_cardex" colspan="2"/>

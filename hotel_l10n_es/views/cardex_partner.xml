@@ -1,10 +1,10 @@
-<?xml version="1.0"?> 
-<openerp>      
-<data> 
+<?xml version="1.0"?>
+<openerp>
+<data>
     <record id="partners_form_cardex" model="ir.ui.view">
         <field name="name">Partnerns Form Cardex</field>
         <field name="model">res.partner</field>
-        <field name="priority" eval="1"/>
+        <!--<field name="priority" eval="1"/>-->
         <field name="arch" type="xml">
             <form string="Partners">
                 <field name="image" widget="image" class="oe_avatar" options="{&quot;preview_image&quot;: &quot;image_medium&quot;, &quot;size&quot;: [90, 90]}"/>
@@ -18,8 +18,8 @@
                 <field name="id_numbers"  placeholder="Identification..." context="{'form_view_ref':'odoo_pms_checkin.inherit_action_partner_id_numbers_form'}"/> -->
                 <div colspan="2">
                     <label for="documenttype" string="Document"/>
-                    <field name="documenttype" placeholder="Select one..." required="True"/>                
-                    <field name="poldocument" placeholder="Document number (DNI: 123456789A)" required="True"/>               
+                    <field name="documenttype" placeholder="Select one..." required="True"/>
+                    <field name="poldocument" placeholder="Document number (DNI: 123456789A)" required="True"/>
                     <field name="polexpedition" placeholder="Document expedition date" required="True"/>
                 </div>
                 <div colspan="2">

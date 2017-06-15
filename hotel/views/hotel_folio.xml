@@ -59,7 +59,21 @@
                             </button>
                             <field name="currency_id" invisible="1"/>
 
-<!--                            <button type="object" class="oe_stat_button"
+                            <button type="object" class="oe_stat_button"
+                                id="invoices_smart_button"
+                                icon="fa-thumbs-up"
+                                name="action_invoices"
+                                attrs="{'invisible': [('invoices_paid','&lt;=',0)]}">
+                                <div class="o_form_field o_stat_info">
+                                    <span class="o_stat_value">
+                                        <field name="invoices_paid" nolabel="1"
+                                        widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    </span>
+                                    <span class="o_stat_text">Paid out</span>
+                                </div>
+                            </button>
+
+                            <button type="object" class="oe_stat_button"
                                 id="invoices_smart_button"
                                 icon="fa-money"
                                 name="action_invoices"
@@ -71,7 +85,21 @@
                                     </span>
                                     <span class="o_stat_text">Pending Payment</span>
                                 </div>
-                            </button>-->
+                            </button>
+
+                            <button type="object" class="oe_stat_button"
+                                id="refunds_smart_button"
+                                icon="fa-undo"
+                                name="action_refunds_invoices"
+                                attrs="{'invisible': [('refund_amount','&lt;=',0)]}">
+                                <div class="o_form_field o_stat_info">
+                                    <span class="o_stat_value">
+                                        <field name="refund_amount" nolabel="1"
+                                        widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    </span>
+                                    <span class="o_stat_text">Refunds</span>
+                                </div>
+                            </button>
 
                         </div>
 
@@ -86,6 +114,9 @@
                             <field name="hotel_invoice_id" states='progress,done,cancel'
                                 readonly="1" />
                         </group>
+                        <group colspan="1">
+                            <field name="partner_internal_commet"/>
+                        </group>
                         <notebook colspan="4">
                             <page string="Folio">
                                 <group colspan="4" col="4">
@@ -93,17 +124,11 @@
                                     <field name="partner_invoice_id" domain="[('parent_id','=',partner_id)]" />
                                     <field name="pricelist_id" domain="[('type','=','sale')]" />
                                     <field name="project_id" />
-                                    <field name="partner_shipping_id" domain="[('parent_id','=',partner_id)]" />
-                                </group>
-                                <newline />
-                                <group colspan="4" col="4">
-                                    <field name="checkin" />
-                                    <field name="checkout" />
-                                    <field name="duration" />
+                                    <field name="partner_shipping_id" invisible="1" domain="[('parent_id','=',partner_id)]" />
                                 </group>
                                 <separator string="Room Lines" id="room_lines_separator" colspan="4" />
                                 <field name="room_lines" colspan="4" string="Room Line"
-                                    nolabel="1" context="{'checkin':checkin,'checkout':checkout}">
+                                    nolabel="1" context="{'folio_id': id}">
                                     <tree string="Room Line">
                                         <field name="product_id" string="Room No" />
                                         <field name="checkin" />
@@ -115,46 +140,7 @@
                                 </field>
                                 <separator string="Service Lines" colspan="4" />
                                 <field name="service_lines" colspan="4" string="Service Line"
-                                    nolabel="1" context="{'checkin':checkin,'checkout':checkout}">
-                                    <form string="Service Line">
-                                        <notebook>
-                                            <page string="Service Line">
-                                                <group col="4" colspan="4">
-                                                    <field name="ser_checkin" />
-                                                    <field name="ser_checkout" />
-                                                </group>
-                                                <separator string="Automatic Declaration" col="4" colspan="4" />
-                                                <group col="4" colspan="4">
-                                                    <field name="ser_room_line"/>
-                                                    <field name="product_id" select="1"
-                                                        domain="[('isservice','=',True)]"
-                                                        context="{'partner_id':partner_id,'quantity':product_uom_qty,'pricelist':parent.pricelist_id,'uom':product_uom}" />
-                                                    <field name="product_uom" />
-                                                    <field name="product_uom_qty" select="1"
-                                                        context="{'partner_id':partner_id,'quantity':product_uom_qty,'pricelist':parent.pricelist_id,'uom':product_uom}"
-                                                        invisible="1"/>
-                                                </group>
-                                                <separator string="Manual Description" colspan="4" />
-                                                <field name="name" colspan="4" select="2"
-                                                    placeholder="---Description---" />
-                                                <group>
-                                                    <field name="price_unit" select="2" />
-                                                    <field name="discount" />
-                                                </group>
-                                                <newline />
-                                                <field name="tax_id" colspan="4" />
-                                                <group>
-                                                    <separator string="States" colspan="4" />
-                                                    <field name="state" select="2" />
-                                                    <field name="invoice_status" />
-                                                </group>
-                                            </page>
-                                            <page string="History">
-                                                <separator string="Invoice Lines" colspan="4" />
-                                                <field name="invoice_lines" colspan="4" nolabel="1" />
-                                            </page>
-                                        </notebook>
-                                    </form>
+                                    nolabel="1" context="{'room_ids': room_lines}">
                                     <tree string="Service Line">
                                         <field name="name" />
                                         <field name="product_id" />
@@ -214,8 +200,6 @@
             <field name="model">hotel.folio</field>
             <field name="arch" type="xml">
                 <tree string="Hotel Folio" colors="blue:state == 'draft';gray:state == 'done'">
-                    <field name="checkin" />
-                    <field name="checkout" />
                     <field name="name" />
                     <field name="partner_id" select="1" />
                     <field name="date_order" select="1" />
@@ -230,8 +214,7 @@
             <field name="name">Hotel- Folios Calendar</field>
             <field name="model">hotel.folio</field>
             <field name="arch" type="xml">
-                <calendar string="Folios" date_start="checkin" color="user_id"
-                    date_stop="checkout">
+                <calendar string="Folios" color="user_id">
                     <field name="name" />
                     <field name="partner_id" />
                     <field name="duration" />
@@ -247,9 +230,11 @@
                 <search string="Tables Detail">
                     <field name="partner_id" />
                     <field name="name" />
+<!--
                     <filter string="Current Booking"
                         domain="[('checkout','&gt;=',datetime.datetime.now().replace(hour=0, minute=0, second=0)),('checkin','&lt;=',datetime.datetime.now().replace(hour=23, minute=59, second=59))]"
                         help="Current Booking" />
+-->
                     <group expand="0" string="Group By">
                         <filter string="Order By Month" domain="[]"
                             context="{'group_by':'date_order'}" />

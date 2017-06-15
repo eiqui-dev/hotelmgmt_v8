@@ -9,8 +9,7 @@
                     <form string="Add Checkin">
                     <sheet>
                         <group col="4">
-                        <label for="reservation_id" string="Resevation"/>
-                        <h1><field name="reservation_id" readonly="1"/></h1>
+                        <field name="reservation_id" nolabel="1" domain="[('folio_id','=',context.get('folio'))]"/>
                         </group>
                             <field name="cardex_ids" readonly="1" invisible="context.get('hidden_cardex',True)" />
                         <group col="4">

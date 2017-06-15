@@ -28,6 +28,53 @@ import time
 import logging
 _logger = logging.getLogger(__name__)
 
+def _offset_format_timestamp1(src_tstamp_str, src_format, dst_format,
+                              ignore_unparsable_time=True, context=None):
+    """
+    Convert a source timeStamp string into a destination timeStamp string,
+    attempting to apply the
+    correct offset if both the server and local timeZone are recognized,or no
+    offset at all if they aren't or if tz_offset is false (i.e. assuming they
+    are both in the same TZ).
+    @param src_tstamp_str: the STR value containing the timeStamp.
+    @param src_format: the format to use when parsing the local timeStamp.
+    @param dst_format: the format to use when formatting the resulting
+     timeStamp.
+    @param server_to_client: specify timeZone offset direction (server=src
+                             and client=dest if True, or client=src and
+                             server=dest if False)
+    @param ignore_unparsable_time: if True, return False if src_tstamp_str
+                                   cannot be parsed using src_format or
+                                   formatted using dst_format.
+    @return: destination formatted timestamp, expressed in the destination
+             timezone if possible and if tz_offset is true, or src_tstamp_str
+             if timezone offset could not be determined.
+    """
+    if not src_tstamp_str:
+        return False
+    res = src_tstamp_str
+    if src_format and dst_format:
+        try:
+            # dt_value needs to be a datetime.datetime object\
+            # (so notime.struct_time or mx.DateTime.DateTime here!)
+            dt_value = datetime.strptime(src_tstamp_str, src_format)
+            if context.get('tz', False):
+                try:
+                    import pytz
+                    src_tz = pytz.timezone(context['tz'])
+                    dst_tz = pytz.timezone('UTC')
+                    src_dt = src_tz.localize(dt_value, is_dst=True)
+                    dt_value = src_dt.astimezone(dst_tz)
+                except Exception:
+                    pass
+            res = dt_value.strftime(dst_format)
+        except Exception:
+            # Normal ways to end up here are if strptime or strftime failed
+            if not ignore_unparsable_time:
+                return False
+            pass
+    return res
+
 COLOR_TYPES = {
     'pre-reservation': '#A4A4A4',
     'reservation': '#0000FF',
@@ -66,17 +113,46 @@ class HotelReservation(models.Model):
         '''
         return self.env['sale.order.line']._number_packages(field_name, arg)
 
-    @api.model
+    @api.multi
     def _get_checkin(self):
-        if 'checkin' in self._context:
-            return self._context['checkin']
-        return time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        folio = False
+        if 'folio_id' in self._context:
+            folio = self.env['hotel.folio'].search([('id','=', self._context['folio_id'])])
+        if folio and folio.room_lines:
+            return folio.room_lines[0].checkin
+        else:
+            if self._context.get('tz'):
+                to_zone = self._context.get('tz')
+            else:
+                to_zone = 'UTC'
+            return _offset_format_timestamp1(time.strftime("%Y-%m-%d 12:00:00"),
+                                             '%Y-%m-%d %H:%M:%S',
+                                             '%Y-%m-%d %H:%M:%S',
+                                             ignore_unparsable_time=True,
+                                             context={'tz': to_zone})
 
     @api.model
     def _get_checkout(self):
-        if 'checkout' in self._context:
-            return self._context['checkout']
-        return time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        folio = False
+        if 'folio_id' in self._context:
+            folio = self.env['hotel.folio'].search([('id','=',self._context['folio_id'])])
+        if folio and folio.room_lines:
+            return folio.room_lines[0].checkout
+        else:
+            if self._context.get('tz'):
+                to_zone = self._context.get('tz')
+            else:
+                to_zone = 'UTC'
+            tm_delta = timedelta(days=1)
+            return datetime.strptime(_offset_format_timestamp1
+                                      (time.strftime("%Y-%m-%d 12:00:00"),
+                                       '%Y-%m-%d %H:%M:%S',
+                                       '%Y-%m-%d %H:%M:%S',
+                                       ignore_unparsable_time=True,
+                                       context={'tz': to_zone}),
+                                      '%Y-%m-%d %H:%M:%S') + tm_delta
+
+
 
 #    def _get_uom_id(self):
 #        try:
@@ -159,6 +235,8 @@ class HotelReservation(models.Model):
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
+    service_line_ids = fields.One2many('hotel.service.line','ser_room_line')
+    pricelist_id = fields.Many2one('product.pricelist',related='folio_id.pricelist_id',readonly="1")
 
     def _compute_cardex_count(self):
         self.cardex_count = len(self.cardex_ids)
@@ -176,14 +254,12 @@ class HotelReservation(models.Model):
     @api.multi
     def action_cancel(self):
         for record in self:
-            record.write({'state': 'cancelled'})
-            _logger.info("CANCEL RESERVATION!")
+            record.state = 'cancelled'
 
     @api.multi
     def action_reservation_checkout(self):
         for r in self:
             self.state = 'done'
-
 
     @api.model
     def create(self, vals, check=True):
@@ -196,7 +272,11 @@ class HotelReservation(models.Model):
         if 'folio_id' in vals:
             folio = self.env["hotel.folio"].browse(vals['folio_id'])
             vals.update({'order_id': folio.order_id.id})
-        return super(HotelReservation, self).create(vals)
+        record = super(HotelReservation, self).create(vals)
+        if record.adults == 0:
+            room = self.env['hotel.room'].search([('product_id','=',record.product_id.id)])
+            record.adults = room.capacity
+        return record
 
     #~ @api.multi
     #~ def unlink(self):
@@ -276,7 +356,7 @@ class HotelReservation(models.Model):
                 lang=self.folio_id.partner_id.lang,
                 partner=self.folio_id.partner_id.id,
                 quantity=1,
-                date_order=self.folio_id.checkin,
+                date_order=self.folio_id.date_order,
                 pricelist=self.folio_id.pricelist_id.id,
                 uom=self.product_uom.id
             )
@@ -319,6 +399,9 @@ class HotelReservation(models.Model):
             total_price += line_price
         self.reservation_lines = cmds
         self.price_unit = total_price
+        if self.adults == 0 and product_id:
+            room =self.env['hotel.room'].search([('product_id','=',product_id.id)])
+            self.adults = room.capacity
 
     @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id')
     def on_change_checkout(self):
@@ -346,6 +429,7 @@ class HotelReservation(models.Model):
                 myduration = dur.days + 1
         self.product_uom_qty = myduration
         res = self.env['hotel.reservation'].search([
+            ('state','!=','cancelled'),
             ('checkin','>=',self.folio_id.date_order),
             ('checkout','>=',self.checkin),
             ('checkin','<=',self.checkout)

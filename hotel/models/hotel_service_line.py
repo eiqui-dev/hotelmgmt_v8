@@ -132,23 +132,23 @@ class HotelServiceLine(models.Model):
         '''
         @param self: object pointer
         '''
-        if not self.product_uom:
-            self.price_unit = 0.0
-            return
-        self.price_unit = self.product_id.lst_price
-        if self.folio_id.partner_id:
-            prod = self.product_id.with_context(
-                lang=self.folio_id.partner_id.lang,
-                partner=self.folio_id.partner_id.id,
-                quantity=1,
-                date_order=self.folio_id.checkin,
-                pricelist=self.folio_id.pricelist_id.id,
-                uom=self.product_uom.id
-            )
-            tax_obj = self.env['account.tax']
-            self.price_unit = tax_obj._fix_tax_included_price(prod.price,
-                                                              prod.taxes_id,
-                                                              self.tax_id)
+        #~ if not self.product_uom:
+            #~ self.price_unit = 0.0
+            #~ return
+        #~ self.price_unit = self.product_id.lst_price
+        #~ if self.folio_id.partner_id:
+            #~ prod = self.product_id.with_context(
+                #~ lang=self.folio_id.partner_id.lang,
+                #~ partner=self.folio_id.partner_id.id,
+                #~ quantity=1,
+                #~ date_order=self.folio_id.date_order,
+                #~ pricelist=self.folio_id.pricelist_id.id,
+                #~ uom=self.product_uom.id
+            #~ )
+            #~ tax_obj = self.env['account.tax']
+            #~ self.price_unit = tax_obj._fix_tax_included_price(prod.price,
+                                                              #~ prod.taxes_id,
+                                                              #~ self.tax_id)
 
     @api.onchange('ser_checkin', 'ser_checkout')
     def on_change_checkout(self):

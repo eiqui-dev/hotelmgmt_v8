@@ -29,4 +29,5 @@ class HotelRoomType(models.Model):
 
     cat_id = fields.Many2one('product.category', 'category', required=True,
                              delegate=True, select=True, ondelete='cascade')
+    code_type = fields.Char('Code')
 

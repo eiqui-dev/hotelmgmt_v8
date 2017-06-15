@@ -33,18 +33,18 @@ class AccountInvoice(models.Model):
         if context.get('invoice_origin', False):
             vals.update({'origin': context['invoice_origin']})
         return super(AccountInvoice, self).create(vals)
-    
-    @api.multi
-    def confirm_paid(self):
-        '''
-        This method change pos orders states to done when folio invoice
-        is in done.
-        ----------------------------------------------------------
-        @param self: object pointer
-        '''
-        pos_order_obj = self.env['pos.order']
-        res = super(AccountInvoice, self).confirm_paid()
-        pos_odr_rec = pos_order_obj.search([('invoice_id', 'in', self._ids)])
-        pos_odr_rec and pos_odr_rec.write({'state': 'done'})
-        return res
+
+    #~ @api.multi
+    #~ def confirm_paid(self):
+        #~ '''
+        #~ This method change pos orders states to done when folio invoice
+        #~ is in done.
+        #~ ----------------------------------------------------------
+        #~ @param self: object pointer
+        #~ '''
+        #~ pos_order_obj = self.env['pos.order']
+        #~ res = super(AccountInvoice, self).confirm_paid()
+        #~ pos_odr_rec = pos_order_obj.search([('invoice_id', 'in', self._ids)])
+        #~ pos_odr_rec and pos_odr_rec.write({'state': 'done'})
+        #~ return res
 

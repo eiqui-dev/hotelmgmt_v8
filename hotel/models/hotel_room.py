@@ -29,7 +29,7 @@ class HotelRoom(models.Model):
     product_id = fields.Many2one('product.product', 'Product_id',
                                  required=True, delegate=True,
                                  ondelete='cascade')
-    floor_id = fields.Many2one('hotel.floor', 'Floor No',
+    floor_id = fields.Many2one('hotel.floor', 'Ubication',
                                help='At which floor the room is located.')
     max_adult = fields.Integer('Max Adult')
     max_child = fields.Integer('Max Child')

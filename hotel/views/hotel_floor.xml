@@ -8,7 +8,7 @@
             <field name="name">hotel.floor.form</field>
             <field name="model">hotel.floor</field>
             <field name="arch" type="xml">
-                <form string=" Hotel Floor">
+                <form string=" Hotel Ubication">
                     <sheet>
                         <group>
                             <field name="name" colspan="1" />
@@ -24,7 +24,7 @@
             <field name="name">hotel.floor.tree</field>
             <field name="model">hotel.floor</field>
             <field name="arch" type="xml">
-                <tree string=" Hotel Floors">
+                <tree string=" Hotel Ubications">
                     <field name="name" colspan="1" />
                     <field name="sequence" select="1" />
                 </tree>
@@ -39,7 +39,7 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <menuitem name="Floor" id="menu_open_hotel_floor_form_tree"
+        <menuitem name="Ubitacions" id="menu_open_hotel_floor_form_tree"
             action="open_hotel_floor_form_tree" sequence="21"
             parent="hotel_configuration_menu" />
 

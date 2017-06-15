@@ -12,6 +12,7 @@
                     <sheet>
                         <group>
                             <field name="name" select="1" />
+                            <field name="code_type" />
                             <field name="parent_id" domain="[('isroomtype','=',True)]"
                                 select="1" />
                             <field name="isroomtype" invisible="1" />

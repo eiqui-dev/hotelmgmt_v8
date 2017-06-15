@@ -20,7 +20,7 @@
 #
 # ---------------------------------------------------------------------------
 from openerp.exceptions import except_orm, UserError, ValidationError
-from openerp.tools import misc, DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.tools import misc, DEFAULT_SERVER_DATETIME_FORMAT, DEFAULT_SERVER_DATE_FORMAT
 from openerp import models, fields, api, _
 from openerp import workflow
 from decimal import Decimal
@@ -110,32 +110,32 @@ class HotelFolio(models.Model):
         """
         return self.search_count([('state', '=', 'draft')])
 
-    @api.model
-    def _get_checkin(self):
-        if self._context.get('tz'):
-            to_zone = self._context.get('tz')
-        else:
-            to_zone = 'UTC'
-        return _offset_format_timestamp1(time.strftime("%Y-%m-%d 12:00:00"),
-                                         '%Y-%m-%d %H:%M:%S',
-                                         '%Y-%m-%d %H:%M:%S',
-                                         ignore_unparsable_time=True,
-                                         context={'tz': to_zone})
+    #~ @api.model
+    #~ def _get_checkin(self):
+        #~ if self._context.get('tz'):
+            #~ to_zone = self._context.get('tz')
+        #~ else:
+            #~ to_zone = 'UTC'
+        #~ return _offset_format_timestamp1(time.strftime("%Y-%m-%d 12:00:00"),
+                                         #~ '%Y-%m-%d %H:%M:%S',
+                                         #~ '%Y-%m-%d %H:%M:%S',
+                                         #~ ignore_unparsable_time=True,
+                                         #~ context={'tz': to_zone})
 
-    @api.model
-    def _get_checkout(self):
-        if self._context.get('tz'):
-            to_zone = self._context.get('tz')
-        else:
-            to_zone = 'UTC'
-        tm_delta = datetime.timedelta(days=1)
-        return datetime.datetime.strptime(_offset_format_timestamp1
-                                          (time.strftime("%Y-%m-%d 12:00:00"),
-                                           '%Y-%m-%d %H:%M:%S',
-                                           '%Y-%m-%d %H:%M:%S',
-                                           ignore_unparsable_time=True,
-                                           context={'tz': to_zone}),
-                                          '%Y-%m-%d %H:%M:%S') + tm_delta
+    #~ @api.model
+    #~ def _get_checkout(self):
+        #~ if self._context.get('tz'):
+            #~ to_zone = self._context.get('tz')
+        #~ else:
+            #~ to_zone = 'UTC'
+        #~ tm_delta = datetime.timedelta(days=1)
+        #~ return datetime.datetime.strptime(_offset_format_timestamp1
+                                          #~ (time.strftime("%Y-%m-%d 12:00:00"),
+                                           #~ '%Y-%m-%d %H:%M:%S',
+                                           #~ '%Y-%m-%d %H:%M:%S',
+                                           #~ ignore_unparsable_time=True,
+                                           #~ context={'tz': to_zone}),
+                                          #~ '%Y-%m-%d %H:%M:%S') + tm_delta
 
     @api.multi
     def copy(self, default=None):
@@ -173,12 +173,12 @@ class HotelFolio(models.Model):
                        default='New')
     order_id = fields.Many2one('sale.order', 'Order', delegate=True,
                                required=True, ondelete='cascade')
-    checkin = fields.Datetime('Check In', required=True, readonly=True,
-                                   states={'draft': [('readonly', False)]},
-                                   default=_get_checkin)
-    checkout = fields.Datetime('Check Out', required=True, readonly=True,
-                                    states={'draft': [('readonly', False)]},
-                                    default=_get_checkout)
+    #~ checkin = fields.Datetime('Check In', required=True, readonly=True,
+                                   #~ states={'draft': [('readonly', False)]},
+                                   #~ default=_get_checkin)
+    #~ checkout = fields.Datetime('Check Out', required=True, readonly=True,
+                                    #~ states={'draft': [('readonly', False)]},
+                                    #~ default=_get_checkout)
     room_lines = fields.One2many('hotel.reservation', 'folio_id',
                                  readonly=True,
                                  states={'draft': [('readonly', False)],
@@ -205,54 +205,74 @@ class HotelFolio(models.Model):
     currrency_ids = fields.One2many('currency.exchange', 'folio_no',
                                     readonly=True)
     hotel_invoice_id = fields.Many2one('account.invoice', 'Invoice')
-    invoices_amount = fields.Integer(compute='_compute_invoices_amount')
+    invoices_amount = fields.Monetary(compute='_compute_invoices_amount')
+    refund_amount = fields.Monetary(compute='_compute_invoices_refund')
+    invoices_paid = fields.Monetary(compute='_compute_invoices_amount')
     booking_pending = fields.Integer ('Booking pending', compute='_compute_booking_pending')
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
-    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins')
-    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts')
+    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins',store=True)
+    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts',store=True)
+    partner_internal_commet = fields.Text (string='Internal Partner Notes',related='partner_id.comment')
+
+    @api.model
+    def count_folios_amount_pending(self):
+        folios = self.env['hotel.folio']
+        folios_ids = []
+        for folio in folios:
+            if folio.invoices_amount > value:
+                folios_ids.append(folio.id)
+        return len(folio_ids)
 
     @api.multi
     def _compute_checkins(self):
-        date_str = date.strftime(tools.DEFAULT_SERVER_DATE_FORMAT)
-        now_str = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         for fol in self:
             for line in fol.room_lines:
                 checkin_dt = datetime.datetime.strptime(line.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
                 checkin_str = checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                 if checkin_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
                     fol.checkins_reservations = True
+                    return True
 
     @api.multi
     def _compute_checkouts(self):
-        date_str = date.strftime(tools.DEFAULT_SERVER_DATE_FORMAT)
-        now_str = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         for fol in self:
             for line in fol.room_lines:
                 checkout_dt = datetime.datetime.strptime(line.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
                 checkout_str = checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                 if checkout_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
-                    fol.checkout_reservations = True
+                    fol.checkouts_reservations = True
 
     @api.multi
     def _compute_invoices_amount(self):
+        for fol in self:
+            inv_pending = 0
+            total_inv = 0
+            total_folio = fol.amount_total
+            for inv in fol.invoice_ids:
+                if inv.type != 'out_refund':
+                    if inv.state == 'draft':
+                        total_inv += inv.amount_total
+                        inv_pending += inv.amount_total
+                    else:
+                        total_inv += inv.amount_total
+                        inv_pending += inv.residual
+            if total_inv < total_folio:
+                inv_pending += total_folio
+            fol.invoices_amount = inv_pending
+            fol.invoices_paid = total_inv - inv_pending
+
+    @api.multi
+    def _compute_invoices_refund(self):
         self.ensure_one()
         inv_pending = 0
         total_inv = 0
         total_folio = self.amount_total
         for inv in self.invoice_ids:
-            if inv.state == 'draft':
+            if inv.type == 'out_refund':
                 total_inv += inv.amount_total
-                inv_pending += inv.amount_total
-            else:
-                total_inv += inv.amount_total
-                inv_pending += inv.residual
-        if total_inv < total_folio:
-            inv_pending += total_folio
-        self.invoices_amount = inv_pending
-
-
+        self.refund_amount = total_inv
 
     @api.multi
     def action_invoices(self):
@@ -264,7 +284,20 @@ class HotelFolio(models.Model):
         'view_mode': 'tree,form',
         'res_model': 'account.invoice',
         'type': 'ir.actions.act_window',
-        'domain': [('id','in', invoices)]
+        'domain': [('id','in', invoices),('type','!=','out_refund')]
+        }
+
+    @api.multi
+    def action_refunds_invoices(self):
+        self.ensure_one()
+        invoices = self.mapped('invoice_ids.id')
+        return{
+        'name': _('Invoices'),
+        'view_type': 'form',
+        'view_mode': 'tree,form',
+        'res_model': 'account.invoice',
+        'type': 'ir.actions.act_window',
+        'domain': [('id','in', invoices),('type','=','out_refund')]
         }
 
 
@@ -360,41 +393,41 @@ class HotelFolio(models.Model):
 #                 raise ValidationError(_('Check in date should be \
 #                 greater than the current date.'))
 
-    @api.onchange('checkout', 'checkin')
-    def onchange_dates(self):
-        '''
-        This mathod gives the duration between check in and checkout
-        if customer will leave only for some hour it would be considers
-        as a whole day.If customer will check in checkout for more or equal
-        hours, which configured in company as additional hours than it would
-        be consider as full days
-        --------------------------------------------------------------------
-        @param self: object pointer
-        @return: Duration and checkout
-        '''
-        company_obj = self.env['res.company']
-        configured_addition_hours = 0
-        company_ids = company_obj.search([])
-        if company_ids.ids:
-            configured_addition_hours = company_ids[0].additional_hours
-        myduration = 0
-        checkin = self.checkin
-        checkout = self.checkout
-        if checkin and checkout:
-            server_dt = DEFAULT_SERVER_DATETIME_FORMAT
-            chkin_dt = datetime.datetime.strptime(checkin, server_dt)
-            chkout_dt = datetime.datetime.strptime(checkout, server_dt)
-            dur = chkout_dt - chkin_dt
-            sec_dur = dur.seconds
-            if (not dur.days and not sec_dur) or (dur.days and not sec_dur):
-                myduration = dur.days
-            else:
-                myduration = dur.days + 1
-            if configured_addition_hours > 0:
-                additional_hours = abs((dur.seconds / 60) / 60)
-                if additional_hours >= configured_addition_hours:
-                    myduration += 1
-        self.duration = myduration
+    #~ @api.onchange('checkout', 'checkin')
+    #~ def onchange_dates(self):
+        #~ '''
+        #~ This mathod gives the duration between check in and checkout
+        #~ if customer will leave only for some hour it would be considers
+        #~ as a whole day.If customer will check in checkout for more or equal
+        #~ hours, which configured in company as additional hours than it would
+        #~ be consider as full days
+        #~ --------------------------------------------------------------------
+        #~ @param self: object pointer
+        #~ @return: Duration and checkout
+        #~ '''
+        #~ company_obj = self.env['res.company']
+        #~ configured_addition_hours = 0
+        #~ company_ids = company_obj.search([])
+        #~ if company_ids.ids:
+            #~ configured_addition_hours = company_ids[0].additional_hours
+        #~ myduration = 0
+        #~ checkin = self.checkin
+        #~ checkout = self.checkout
+        #~ if checkin and checkout:
+            #~ server_dt = DEFAULT_SERVER_DATETIME_FORMAT
+            #~ chkin_dt = datetime.datetime.strptime(checkin, server_dt)
+            #~ chkout_dt = datetime.datetime.strptime(checkout, server_dt)
+            #~ dur = chkout_dt - chkin_dt
+            #~ sec_dur = dur.seconds
+            #~ if (not dur.days and not sec_dur) or (dur.days and not sec_dur):
+                #~ myduration = dur.days
+            #~ else:
+                #~ myduration = dur.days + 1
+            #~ if configured_addition_hours > 0:
+                #~ additional_hours = abs((dur.seconds / 60) / 60)
+                #~ if additional_hours >= configured_addition_hours:
+                    #~ myduration += 1
+        #~ self.duration = myduration
 
     @api.model
     def create(self, vals, check=True):
@@ -598,6 +631,8 @@ class HotelFolio(models.Model):
         order_ids = [folio.order_id.id for folio in self]
         sale_obj = self.env['sale.order'].browse(order_ids)
         rv = sale_obj.action_cancel()
+        for res in self.room_lines:
+            res.state = 'cancelled'
         for sale in self:
             for pick in sale.picking_ids:
                 workflow.trg_validate(self._uid, 'stock.picking', pick.id,
@@ -673,6 +708,8 @@ class HotelFolio(models.Model):
         '''
         if not len(self._ids):
             return False
+        for room in self.room_lines:
+            room.state = 'draft'
         query = "select id from sale_order_line \
         where order_id IN %s and state=%s"
         self._cr.execute(query, (tuple(self._ids), 'cancel'))
