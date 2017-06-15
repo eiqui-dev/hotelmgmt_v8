@@ -412,8 +412,8 @@ class HotelReservation(models.Model):
             total_price += line_price
         self.reservation_lines = cmds
         self.price_unit = total_price
-        if self.adults == 0 and product_id:
-            room =self.env['hotel.room'].search([('product_id','=',product_id.id)])
+        if self.adults == 0 and self.product_id:
+            room = self.env['hotel.room'].search([('product_id', '=', product_id.id)])
             self.adults = room.capacity
         return {'total_price': total_price, 'commands': cmds}
 
