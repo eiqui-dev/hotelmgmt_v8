@@ -205,7 +205,7 @@ class HotelFolio(models.Model):
     currrency_ids = fields.One2many('currency.exchange', 'folio_no',
                                     readonly=True)
     hotel_invoice_id = fields.Many2one('account.invoice', 'Invoice')
-    invoices_amount = fields.Monetary(compute='_compute_invoices_amount')
+    invoices_amount = fields.Monetary(compute='_compute_invoices_amount',store=True)
     refund_amount = fields.Monetary(compute='_compute_invoices_refund')
     invoices_paid = fields.Monetary(compute='_compute_invoices_amount')
     booking_pending = fields.Integer ('Booking pending', compute='_compute_booking_pending')
@@ -214,16 +214,7 @@ class HotelFolio(models.Model):
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
     checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins',store=True)
     checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts',store=True)
-    partner_internal_commet = fields.Text (string='Internal Partner Notes',related='partner_id.comment')
-
-    @api.model
-    def count_folios_amount_pending(self):
-        folios = self.env['hotel.folio']
-        folios_ids = []
-        for folio in folios:
-            if folio.invoices_amount > value:
-                folios_ids.append(folio.id)
-        return len(folio_ids)
+    partner_internal_comment = fields.Text (string='Internal Partner Notes',related='partner_id.comment')
 
     @api.multi
     def _compute_checkins(self):
@@ -243,6 +234,20 @@ class HotelFolio(models.Model):
                 checkout_str = checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                 if checkout_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
                     fol.checkouts_reservations = True
+
+    @api.model
+    def checks_today(self):
+        self.env['hotel.folio'].search([]).write({'checkins_reservations':False,'checkout_reservations':False})
+        today_start = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        today_end = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        reservations = self.env[('hotel.reservation')].search([
+            ('checkout','>=',today_start),
+            ('checkin','<=',today_end)
+            ])
+        folios_out_ids = reservations.filtered(lambda r: r.checkout >= today_start).mapped('folio_id.id')
+        folios_in_ids = reservations.filtered(lambda r: r.checkin <= today_end).mapped('folio_id.id')
+        self.env['hotel.folio'].search([('id','in',folios_in_ids)]).write({'checkins_reservations':True})
+        self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
 
     @api.multi
     def _compute_invoices_amount(self):
