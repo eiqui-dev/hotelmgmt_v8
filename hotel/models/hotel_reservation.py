@@ -382,11 +382,11 @@ class HotelReservation(models.Model):
             _logger.info("PASA ONCHANGE 3")
             # UTC -> Local
             tz = self._context.get('tz')
-            chkin_dt = fields.Datetime.from_string(self.checkin).replace(tzinfo=pytz.utc)
-            chkout_dt = fields.Datetime.from_string(self.checkout).replace(tzinfo=pytz.utc)
+            chkin_dt = fields.Datetime.from_string(self.checkin)
+            chkout_dt = fields.Datetime.from_string(self.checkout)
             if tz:
-                chkin_dt = chkin_dt.astimezone(pytz.timezone(tz))
-                chkout_dt = chkout_dt.astimezone(pytz.timezone(tz))
+                chkin_dt = chkin_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+                chkout_dt = chkout_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
             days_diff = abs((chkout_dt - chkin_dt).days)
             _logger.info("PASA AA")
             _logger.info(days_diff)
