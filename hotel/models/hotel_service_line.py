@@ -23,6 +23,8 @@ from openerp import models, fields, api, _
 from openerp.tools import misc, DEFAULT_SERVER_DATETIME_FORMAT
 import time
 import datetime
+import logging
+_logger = logging.getLogger(__name__)
 
 class HotelServiceLine(models.Model):
 
@@ -126,6 +128,14 @@ class HotelServiceLine(models.Model):
             self.price_unit = tax_obj._fix_tax_included_price(prod.price,
                                                               prod.taxes_id,
                                                               self.tax_id)
+        #~ _logger.info(self._context)
+        #~ if 'folio_id' in self._context:
+            #~ _logger.info(self._context)
+            #~ domain_rooms = []
+            #~ rooms_lines = self.env['hotel.reservation'].search([('folio_id','=',folio_id)])
+            #~ room_ids = room_lines.mapped('id')
+            #~ domain_rooms.append(('id','in',room_ids))
+            #~ return {'domain': {'ser_room_line': domain_rooms}}
 
     @api.onchange('product_uom')
     def product_uom_change(self):

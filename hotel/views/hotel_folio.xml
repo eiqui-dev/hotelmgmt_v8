@@ -140,7 +140,7 @@
                                 </field>
                                 <separator string="Service Lines" colspan="4" />
                                 <field name="service_lines" colspan="4" string="Service Line"
-                                    nolabel="1" context="{'room_ids': room_lines}">
+                                    nolabel="1" context="{'room_lines': room_lines}">
                                     <tree string="Service Line">
                                         <field name="name" />
                                         <field name="product_id" />

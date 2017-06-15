@@ -205,7 +205,7 @@ class HotelFolio(models.Model):
     currrency_ids = fields.One2many('currency.exchange', 'folio_no',
                                     readonly=True)
     hotel_invoice_id = fields.Many2one('account.invoice', 'Invoice')
-    invoices_amount = fields.Monetary(compute='_compute_invoices_amount',store=True)
+    invoices_amount = fields.Monetary(compute='_compute_invoices_amount')
     refund_amount = fields.Monetary(compute='_compute_invoices_refund')
     invoices_paid = fields.Monetary(compute='_compute_invoices_amount')
     booking_pending = fields.Integer ('Booking pending', compute='_compute_booking_pending')
@@ -235,19 +235,19 @@ class HotelFolio(models.Model):
                 if checkout_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
                     fol.checkouts_reservations = True
 
-    @api.model
-    def checks_today(self):
-        self.env['hotel.folio'].search([]).write({'checkins_reservations':False,'checkout_reservations':False})
-        today_start = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
-        today_end = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
-        reservations = self.env[('hotel.reservation')].search([
-            ('checkout','>=',today_start),
-            ('checkin','<=',today_end)
-            ])
-        folios_out_ids = reservations.filtered(lambda r: r.checkout >= today_start).mapped('folio_id.id')
-        folios_in_ids = reservations.filtered(lambda r: r.checkin <= today_end).mapped('folio_id.id')
-        self.env['hotel.folio'].search([('id','in',folios_in_ids)]).write({'checkins_reservations':True})
-        self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
+    #~ @api.model
+    #~ def checks_today(self):
+        #~ self.env['hotel.folio'].search([]).write({'checkins_reservations':False,'checkout_reservations':False})
+        #~ today_start = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        #~ today_end = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        #~ reservations = self.env[('hotel.reservation')].search([
+            #~ ('checkout','>=',today_start),
+            #~ ('checkin','<=',today_end)
+            #~ ])
+        #~ folios_out_ids = reservations.filtered(lambda r: r.checkout >= today_start).mapped('folio_id.id')
+        #~ folios_in_ids = reservations.filtered(lambda r: r.checkin <= today_end).mapped('folio_id.id')
+        #~ self.env['hotel.folio'].search([('id','in',folios_in_ids)]).write({'checkins_reservations':True})
+        #~ self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
 
     @api.multi
     def _compute_invoices_amount(self):
@@ -664,6 +664,8 @@ class HotelFolio(models.Model):
         if self.env['ir.values'].get_default('sale.config.settings',
                                              'auto_done_setting'):
             self.order_id.action_done()
+        for room in room_lines:
+            room.to_assign = False
 
     @api.multi
     def test_state(self, mode):
