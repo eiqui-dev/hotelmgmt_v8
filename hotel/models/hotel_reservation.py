@@ -515,10 +515,10 @@ class HotelReservation(models.Model):
         if self.checkin >= self.checkout:
                 raise ValidationError(_('Room line Check In Date Should be \
                 less than the Check Out Date!'))
-        if self.folio_id.date_order and self.checkin:
-            if self.checkin <= self.folio_id.date_order:
-                raise ValidationError(_('Room line check in date should be \
-                greater than the current date.'))
+        #if self.folio_id.date_order and self.checkin:
+            #if self.checkin <= self.folio_id.date_order:
+                #raise ValidationError(_('Room line check in date should be \
+                #greater than the current date.'))
         res = self.env['hotel.reservation'].search([
         ('id','!=',self.id),
         ('checkin','>=',self.folio_id.date_order),
