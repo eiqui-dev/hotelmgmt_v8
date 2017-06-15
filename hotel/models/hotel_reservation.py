@@ -383,7 +383,9 @@ class HotelReservation(models.Model):
             # UTC -> Local
             chkin_dt = fields.Datetime.from_string(self.checkin).replace(tzinfo=pytz.utc).astimezone(pytz.timezone(self._context.get('tz') or 'UTC'))
             chkout_dt = fields.Datetime.from_string(self.checkout).replace(tzinfo=pytz.utc).astimezone(pytz.timezone(self._context.get('tz') or 'UTC'))
-            days_diff = (chkout_dt - chkin_dt).days
+            days_diff = abs((chkout_dt - chkin_dt).days)
+            _logger.info("PASA AA")
+            _logger.info(days_diff)
             res = self.prepare_reservation_lines(chkin_dt, days_diff)
             self.reservation_lines = res['commands']
             self.price_unit = res['total_price']
@@ -410,8 +412,6 @@ class HotelReservation(models.Model):
                 'price': line_price
             }))
             total_price += line_price
-        self.reservation_lines = cmds
-        self.price_unit = total_price
         if self.adults == 0 and self.product_id:
             room = self.env['hotel.room'].search([('product_id', '=', product_id.id)])
             self.adults = room.capacity
