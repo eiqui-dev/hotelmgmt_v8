@@ -688,7 +688,7 @@ class HotelFolio(models.Model):
         sale_obj = self.env['sale.order'].browse(order_ids)
         rv = sale_obj.action_cancel()
         for res in self.room_lines:
-            res.state = 'cancelled'
+            res.action_cancel()
         for sale in self:
             for pick in sale.picking_ids:
                 workflow.trg_validate(self._uid, 'stock.picking', pick.id,
