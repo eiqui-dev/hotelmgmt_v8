@@ -655,7 +655,7 @@ class HotelFolio(models.Model):
             order.state = 'sale'
             order.order_line._action_procurement_create()
             for room in self.room_lines:
-                room.write({'state': 'confirm'})
+                room.write({'state': 'confirm','to_assign':False})
             if not order.project_id:
                 for line in order.order_line:
                     if line.product_id.invoice_policy == 'cost':
@@ -664,8 +664,6 @@ class HotelFolio(models.Model):
         if self.env['ir.values'].get_default('sale.config.settings',
                                              'auto_done_setting'):
             self.order_id.action_done()
-        for room in room_lines:
-            room.to_assign = False
 
     @api.multi
     def test_state(self, mode):
