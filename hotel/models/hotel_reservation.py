@@ -372,6 +372,8 @@ class HotelReservation(models.Model):
     @api.onchange('checkin', 'checkout', 'product_id')
     def on_change_checkin_checkout_product_id(self):
         _logger.info("PASA ONCHANGE 1")
+        _logger.info(self.checkin)
+        _logger.info(self.checkout)
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
@@ -381,9 +383,18 @@ class HotelReservation(models.Model):
         if self._context.get('regenerate', True):
             _logger.info("PASA ONCHANGE 3")
             # UTC -> Local
-            chkin_dt = fields.Datetime.from_string(self.checkin).replace(tzinfo=pytz.utc).astimezone(pytz.timezone(self._context.get('tz')))
-            chkout_dt = fields.Datetime.from_string(self.checkout).replace(tzinfo=pytz.utc).astimezone(pytz.timezone(self._context.get('tz')))
-            days_diff = (chkout_dt - chkin_dt).days
+            _logger.info(self.checkin)
+            _logger.info(self.checkout)
+            tz = self._context.get('tz')
+            chkin_dt = fields.Datetime.from_string(self.checkin)
+            chkout_dt = fields.Datetime.from_string(self.checkout)
+            if tz:
+                _logger.info("TIENE TZ")
+                chkin_dt = chkin_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+                chkout_dt = chkout_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+            days_diff = abs((chkout_dt - chkin_dt).days)
+            _logger.info("PASA AA")
+            _logger.info(days_diff)
             res = self.prepare_reservation_lines(chkin_dt, days_diff)
             self.reservation_lines = res['commands']
             self.price_unit = res['total_price']
@@ -410,10 +421,8 @@ class HotelReservation(models.Model):
                 'price': line_price
             }))
             total_price += line_price
-        self.reservation_lines = cmds
-        self.price_unit = total_price
-        if self.adults == 0 and product_id:
-            room =self.env['hotel.room'].search([('product_id','=',product_id.id)])
+        if self.adults == 0 and self.product_id:
+            room = self.env['hotel.room'].search([('product_id', '=', product_id.id)])
             self.adults = room.capacity
         return {'total_price': total_price, 'commands': cmds}
 
