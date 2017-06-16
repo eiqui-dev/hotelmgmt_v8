@@ -239,14 +239,16 @@ class HotelReservation(models.Model):
     pricelist_id = fields.Many2one('product.pricelist',related='folio_id.pricelist_id',readonly="1")
 
     def _compute_cardex_count(self):
-        self.cardex_count = len(self.cardex_ids)
+	for res in self:
+        	res.cardex_count = len(res.cardex_ids)
 
     def _compute_cardex_pending(self):
-        self.cardex_pending_num = self.adults + self.children - len(self.cardex_ids)
-        if (self.adults + self.children - len(self.cardex_ids))<=0:
-            self.cardex_pending = False
-        else:
-            self.cardex_pending = True
+        for res in self:
+        	res.cardex_pending_num = res.adults + res.children - len(res.cardex_ids)
+	        if (res.adults + res.children - len(res.cardex_ids))<=0:
+        	    res.cardex_pending = False
+	        else:
+        	    res.cardex_pending = True
 
 #    product_uom = fields.Many2one('product.uom',string='Unit of Measure',
 #                                  required=True, default=_get_uom_id)
