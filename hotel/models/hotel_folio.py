@@ -205,9 +205,9 @@ class HotelFolio(models.Model):
     currrency_ids = fields.One2many('currency.exchange', 'folio_no',
                                     readonly=True)
     hotel_invoice_id = fields.Many2one('account.invoice', 'Invoice')
-    invoices_amount = fields.Monetary(compute='_compute_invoices_amount')
+    invoices_amount = fields.Monetary(compute='compute_invoices_amount')
     refund_amount = fields.Monetary(compute='_compute_invoices_refund')
-    invoices_paid = fields.Monetary(compute='_compute_invoices_amount')
+    invoices_paid = fields.Monetary(compute='compute_invoices_amount')
     booking_pending = fields.Integer ('Booking pending', compute='_compute_booking_pending')
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
@@ -250,7 +250,7 @@ class HotelFolio(models.Model):
         #~ self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
 
     @api.multi
-    def _compute_invoices_amount(self):
+    def compute_invoices_amount(self):
         for fol in self:
             inv_pending = 0
             total_inv = 0
@@ -264,9 +264,9 @@ class HotelFolio(models.Model):
                         total_inv += inv.amount_total
                         inv_pending += inv.residual
             if total_inv < total_folio:
-                inv_pending += total_folio
+                inv_pending = total_folio - total_inv
             fol.invoices_amount = inv_pending
-            fol.invoices_paid = total_inv - inv_pending
+            fol.invoices_paid = total_folio - inv_pending
 
     @api.multi
     def _compute_invoices_refund(self):
@@ -318,6 +318,57 @@ class HotelFolio(models.Model):
         'type': 'ir.actions.act_window',
         'domain': [('reservation_id','in', rooms)]
         }
+
+    @api.multi
+    def action_folios_in(self):
+        reservations = self.env['hotel.reservation'].search([
+                    ('checkin','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkin','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT))
+                    ])
+        folios = reservations.mapped('folio_id.id')
+        return {
+        'name': _('Checkins'),
+        'view_type': 'form',
+        'view_mode': 'tree,form',
+        'res_model': 'hotel.folio',
+        'type': 'ir.actions.act_window',
+        'domain': [('id','in', folios)]
+        }
+
+    @api.multi
+    def action_folios_out(self):
+        reservations = self.env['hotel.reservation'].search([
+                    ('checkout','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkout','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT))
+                    ])
+        folios = reservations.mapped('folio_id.id')
+        return {
+        'name': _('Checkouts'),
+        'view_type': 'form',
+        'view_mode': 'tree,form',
+        'res_model': 'hotel.folio',
+        'type': 'ir.actions.act_window',
+        'domain': [('id','in', folios)]
+        }
+
+    @api.multi
+    def action_folios_amount(self):
+        reservations = self.env['hotel.reservation'].search([
+                    ('checkout','<=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT))
+                    ])
+        folio_ids = reservations.mapped('folio_id.id')
+        folios = self.env['hotel.folio'].search([('id','in',folio_ids)])
+        folios.filtered(lambda r: r.invoices_amount >= 0)
+        return {
+        'name': _('Checkouts'),
+        'view_type': 'form',
+        'view_mode': 'tree,form',
+        'res_model': 'hotel.folio',
+        'type': 'ir.actions.act_window',
+        'domain': [('id','in', folios.ids)]
+        }
+
+
 
     @api.multi
     def _compute_cardex_count(self):

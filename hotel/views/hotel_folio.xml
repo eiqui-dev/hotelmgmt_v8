@@ -31,8 +31,6 @@
 
                     <sheet>
                         <div class=" oe_button_box">
-                            <!--<button name="go_to_currency_exchange" string="Money Exchange"
-                                icon="fa-refresh" class="oe_stat_button" type="object" />-->
                             <button type="action" class="oe_stat_button"
                                 id="cardex_smart_button"
                                 icon="fa-user-plus"
@@ -170,7 +168,7 @@
                                     <field name="client_order_ref" />
                                 </group>
                             </page>
-                            <page string="History">
+                            <page string="Invoices">
                                 <separator string="Related invoices" colspan="4" />
                                 <field name="invoice_ids" colspan="4" nolabel="1" />
                             </page>
