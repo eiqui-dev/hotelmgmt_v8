@@ -38,6 +38,8 @@
     'data': [
         'security/hotel_security.xml',
         'security/ir.model.access.csv',
+        'wizard/hotel_wizard.xml',
+        'wizard/checkinwizard.xml',
         'views/hotel_sequence.xml',
         'views/hotel_report.xml',
         'views/report_hotel_management.xml',
@@ -57,8 +59,6 @@
         'views/reservation_restriction_views.xml',
         'views/hotel_reservation.xml',
         'views/virtual_room_views.xml',
-        'wizard/hotel_wizard.xml',
-        'wizard/checkinwizard.xml',
         'views/cardex.xml',
     ],
     'css': ['static/src/css/room_kanban.css'],
