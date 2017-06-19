@@ -323,8 +323,8 @@ class HotelFolio(models.Model):
     def action_folios_in(self):
         reservations = self.env['hotel.reservation'].search([
                     ('checkin','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('checkin','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT))
-                    ])
+                    ('checkin','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('state','!=','booking')])
         folios = reservations.mapped('folio_id.id')
         return {
         'name': _('Checkins'),
@@ -339,8 +339,8 @@ class HotelFolio(models.Model):
     def action_folios_out(self):
         reservations = self.env['hotel.reservation'].search([
                     ('checkout','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('checkout','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT))
-                    ])
+                    ('checkout','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('state','!=','booking')])
         folios = reservations.mapped('folio_id.id')
         return {
         'name': _('Checkouts'),
@@ -355,7 +355,7 @@ class HotelFolio(models.Model):
     def action_folios_amount(self):
         reservations = self.env['hotel.reservation'].search([
                     ('checkout','<=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT))
-                    ])
+                     ])
         folio_ids = reservations.mapped('folio_id.id')
         folios = self.env['hotel.folio'].search([('id','in',folio_ids)])
         folios.filtered(lambda r: r.invoices_amount >= 0)
