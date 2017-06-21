@@ -102,4 +102,4 @@ class Wizard(models.TransientModel):
           'partner_id':self.partner_id.id,
           'enter_date':self.enter_date,
           'exit_date':self.exit_date})
-        return
+        return {'type': 'ir.actions.act_window_close'}
