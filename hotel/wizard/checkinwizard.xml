@@ -46,6 +46,7 @@
                 <field name="name">Add Check</field>
                 <field name="res_model">checkin.wizard</field>
                 <field name="view_id" ref="checkin_wizard_form_2"/>
+                <field name="target">new</field>
             </record>
 
         <record id="checkin_wizard_form_view" model="ir.ui.view">
@@ -80,7 +81,7 @@
                         res_model="checkin.wizard"
                         view_mode="form"
                         view_id="checkin_wizard_form_view"
-                        target="inline"
+                        target="new"
                         key2="client_action_multi"/>
 
             <act_window id="launch_checkin_wizard"
