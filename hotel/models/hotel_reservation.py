@@ -82,7 +82,8 @@ COLOR_TYPES = {
     'checkout': '#01DF01',
     'dontsell': '#000000',
     'staff': '#FF4000',
-    'directsale': '#8A084B'
+    'directsale': '#8A084B',
+    'to-assign': '#D01CA4',
 }
 
 class HotelReservation(models.Model):
@@ -152,7 +153,28 @@ class HotelReservation(models.Model):
                                        context={'tz': to_zone}),
                                       '%Y-%m-%d %H:%M:%S') + tm_delta
 
+    @api.model
+    def _name_search(self,name='', args=None, operator='ilike', limit=100):
+        if args is None:
+            args = []
+        if not(name == '' and operator == 'ilike'):
+            args += ['|',
+                ('folio_id.name', operator, name),
+                ('product_id.name', operator, name)
+                ]
+        return super(HotelReservation, self)._name_search(
+            name='', args = args, operator = 'ilike',
+            limit = limit)
 
+
+    @api.multi
+    def name_get(self):
+        result=[]
+        for res in self:
+            name = u'%s (%s)' % (res.folio_id.name,
+                            res.product_id.name)
+            result.append((res.id, name))
+        return result
 
 #    def _get_uom_id(self):
 #        try:
@@ -185,6 +207,8 @@ class HotelReservation(models.Model):
                 rec.reserve_color = COLOR_TYPES.get('staff')
             elif rec.reservation_type == 'out':
                 rec.reserve_color = COLOR_TYPES.get('dontsell')
+            elif rec.to_assign == True:
+                rec.reserve_color = COLOR_TYPES.get('to-assign')
             elif rec.state == 'draft':
                 rec.reserve_color = COLOR_TYPES.get('pre-reservation')
             elif rec.state == 'confirm':
@@ -239,16 +263,16 @@ class HotelReservation(models.Model):
     pricelist_id = fields.Many2one('product.pricelist',related='folio_id.pricelist_id',readonly="1")
 
     def _compute_cardex_count(self):
-	for res in self:
-        	res.cardex_count = len(res.cardex_ids)
+        for res in self:
+                res.cardex_count = len(res.cardex_ids)
 
     def _compute_cardex_pending(self):
         for res in self:
-        	res.cardex_pending_num = res.adults + res.children - len(res.cardex_ids)
-	        if (res.adults + res.children - len(res.cardex_ids))<=0:
-        	    res.cardex_pending = False
-	        else:
-        	    res.cardex_pending = True
+            res.cardex_pending_num = res.adults + res.children - len(res.cardex_ids)
+            if (res.adults + res.children - len(res.cardex_ids))<=0:
+                res.cardex_pending = False
+            else:
+                res.cardex_pending = True
 
 #    product_uom = fields.Many2one('product.uom',string='Unit of Measure',
 #                                  required=True, default=_get_uom_id)
@@ -381,28 +405,20 @@ class HotelReservation(models.Model):
         if not self.checkout:
             self.checkout = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
 
-        _logger.info("PASA ONCHANGE 2")
+
         if self._context.get('regenerate', True):
-            _logger.info("PASA ONCHANGE 3")
             # UTC -> Local
-            _logger.info(self.checkin)
-            _logger.info(self.checkout)
+            _logger.info(self.id)
             tz = self._context.get('tz')
             chkin_dt = fields.Datetime.from_string(self.checkin)
             chkout_dt = fields.Datetime.from_string(self.checkout)
             if tz:
-                _logger.info("TIENE TZ")
                 chkin_dt = chkin_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
                 chkout_dt = chkout_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
             days_diff = abs((chkout_dt - chkin_dt).days)
-            _logger.info("PASA AA")
-            _logger.info(days_diff)
             res = self.prepare_reservation_lines(chkin_dt, days_diff)
             self.reservation_lines = res['commands']
             self.price_unit = res['total_price']
-            _logger.info("PASA ONCHANGE 4")
-            _logger.info(res['commands'])
-        _logger.info("PASA ONCHANGE 5")
 
     @api.model
     def prepare_reservation_lines(self, datefrom, days):
@@ -453,23 +469,20 @@ class HotelReservation(models.Model):
             else:
                 myduration = dur.days + 1
         self.product_uom_qty = myduration
-        res = self.env['hotel.reservation'].search([
-            ('state','!=','cancelled'),
-            ('checkin','>=',self.folio_id.date_order),
-            ('checkout','>=',self.checkin),
-            ('checkin','<=',self.checkout)
-            ])
-        res_in = res.search([
+        res_in = self.env['hotel.reservation'].search([
             ('checkin','>=',self.checkin),
             ('checkin','<=',self.checkout)])
-        res_out = res.search([
+        res_out = self.env['hotel.reservation'].search([
             ('checkout','>=',self.checkin),
             ('checkout','<=',self.checkout)])
-        res_full = res.search([
+        res_full = self.env['hotel.reservation'].search([
             ('checkin','<',self.checkin),
             ('checkout','>',self.checkout)])
         occupied = res_in | res_out | res_full
-        occupied &= res
+        _logger.info(self.checkin)
+        _logger.info(self.env['hotel.folio'].search([('id','=',20)]).room_lines[0].checkin)
+        _logger.info(self.checkout)
+        _logger.info(self.env['hotel.folio'].search([('id','=',20)]).room_lines[0].checkout)
         rooms_occupied= occupied.mapped('product_id.id')
         domain_rooms = [('isroom','=',True),('id', 'not in', rooms_occupied)]
         if self.room_type_id:
@@ -530,19 +543,17 @@ class HotelReservation(models.Model):
             #if self.checkin <= self.folio_id.date_order:
                 #raise ValidationError(_('Room line check in date should be \
                 #greater than the current date.'))
-        res = self.env['hotel.reservation'].search([
-        ('id','!=',self.id),
-        ('checkin','>=',self.folio_id.date_order),
-        ('product_id','=',self.product_id.id)
-        ])
         res_in = self.env['hotel.reservation'].search([
             ('checkin','>=',self.checkin),
             ('checkin','<=',self.checkout)])
         res_out = self.env['hotel.reservation'].search([
             ('checkout','>=',self.checkin),
             ('checkout','<=',self.checkout)])
-        occupied = res_in | res_out
-        occupied &= res
+        res_full = self.env['hotel.reservation'].search([
+            ('checkin','<',self.checkin),
+            ('checkout','>',self.checkout)])
+        occupied = res_in | res_out | res_full
+        occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id)
         occupied_name = ','.join(str(x.id) for x in occupied)
         if occupied:
            warning_msg = 'You tried to confirm \

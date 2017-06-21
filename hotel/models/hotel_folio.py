@@ -27,6 +27,9 @@ from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 import datetime
 import time
+import pytz
+import logging
+_logger = logging.getLogger(__name__)
 
 
 def _offset_format_timestamp1(src_tstamp_str, src_format, dst_format,
@@ -340,7 +343,7 @@ class HotelFolio(models.Model):
         reservations = self.env['hotel.reservation'].search([
                     ('checkout','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('checkout','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('state','!=','booking')])
+                    ])
         folios = reservations.mapped('folio_id.id')
         return {
         'name': _('Checkouts'),
@@ -507,31 +510,7 @@ class HotelFolio(models.Model):
                 vals = {}
             vals['name'] = self.env['ir.sequence'].next_by_code('hotel.folio')
             folio_id = super(HotelFolio, self).create(vals)
-            #~ folio_room_line_obj = self.env['folio.room.line']
-            #~ h_room_obj = self.env['hotel.room']
-            #~ try:
-                #~ for rec in folio_id:
-                    #~ if not rec.reservation_id:
-                        #~ for room_rec in rec.room_lines:
-                            #~ prod = room_rec.product_id.name
-                            #~ room_obj = h_room_obj.search([('name', '=', prod)])
-                            #~ vals = {'room_id': room_obj.id,
-                                    #~ 'checkin': rec.checkin,
-                                    #~ 'checkout': rec.checkout,
-                                    #~ 'folio_id': rec.id,
-                                    #~ }
-                            #~ folio_room_line_obj.create(vals)
-            #~ except:
-                #~ for rec in folio_id:
-                    #~ for room_rec in rec.room_lines:
-                        #~ prod = room_rec.product_id.name
-                        #~ room_obj = h_room_obj.search([('name', '=', prod)])
-                        #~ vals = {'room_id': room_obj.id,
-                                #~ 'checkin': rec.checkin,
-                                #~ 'checkout': rec.checkout,
-                                #~ 'folio_id': rec.id,
-                                #~ }
-                        #~ folio_room_line_obj.create(vals)
+
         return folio_id
 
     #~ @api.multi
@@ -625,7 +604,20 @@ class HotelFolio(models.Model):
                 self.partner_invoice_id = partner_rec.id
                 self.partner_shipping_id = partner_rec.id
                 self.pricelist_id = partner_rec.property_product_pricelist.id
+            for line in self.room_lines:
+                _logger.info(line.id)
+                tz = self._context.get('tz')
+                chkin_dt = fields.Datetime.from_string(line.checkin)
+                chkout_dt = fields.Datetime.from_string(line.checkout)
+                if tz:
+                    chkin_dt = chkin_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+                    chkout_dt = chkout_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+                days_diff = abs((chkout_dt - chkin_dt).days)
+                res = line.prepare_reservation_lines(chkin_dt, days_diff)
+                line.reservation_lines = res['commands']
+                line.price_unit = res['total_price']
         self.currency_id = self.env.ref('base.main_company').currency_id
+
 
     @api.multi
     def button_dummy(self):

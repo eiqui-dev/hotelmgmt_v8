@@ -131,6 +131,8 @@
                                         <field name="product_id" string="Room No" />
                                         <field name="checkin" />
                                         <field name="checkout" />
+                                        <field name="adults" />
+                                        <field name="children" />
                                         <field name="price_subtotal" />
                                         <field name="state" />
                                         <field name="partner_id" invisible="1"/>
@@ -139,7 +141,7 @@
                                 <separator string="Service Lines" colspan="4" />
                                 <field name="service_lines" colspan="4" string="Service Line"
                                     nolabel="1" context="{'room_lines': room_lines}">
-                                    <tree string="Service Line">
+                                    <tree string="Service Line" create="false">
                                         <field name="name" />
                                         <field name="product_id" />
                                         <field name="product_uom_qty" />
