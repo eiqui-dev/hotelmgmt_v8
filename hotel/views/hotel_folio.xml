@@ -100,8 +100,6 @@
                             </button>
 
                         </div>
-
-                        <label string="Folio Number" />
                         <h1>
                             <field name="name" colspan="4" />
                         </h1>
@@ -190,6 +188,10 @@
                             </page>
                         </notebook>
                     </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
                 </form>
             </field>
         </record>

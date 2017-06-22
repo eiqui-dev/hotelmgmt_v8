@@ -170,7 +170,7 @@ class HotelFolio(models.Model):
     _description = 'hotel folio new'
     _rec_name = 'order_id'
     _order = 'id'
-    _inherit = ['ir.needaction_mixin']
+    _inherit = ['ir.needaction_mixin','mail.thread']
 
     name = fields.Char('Folio Number', readonly=True, index=True,
                        default='New')
@@ -215,9 +215,9 @@ class HotelFolio(models.Model):
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
-    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins',store=True)
-    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts',store=True)
-    partner_internal_comment = fields.Text (string='Internal Partner Notes',related='partner_id.comment')
+    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins')
+    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts')
+    partner_internal_comment = fields.Text(string='Internal Partner Notes',related='partner_id.comment')
 
     @api.multi
     def _compute_checkins(self):
@@ -327,7 +327,7 @@ class HotelFolio(models.Model):
         reservations = self.env['hotel.reservation'].search([
                     ('checkin','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('checkin','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('state','!=','booking')])
+                    ('state','not in',['booking','cancelled'])])
         folios = reservations.mapped('folio_id.id')
         return {
         'name': _('Checkins'),
@@ -361,9 +361,9 @@ class HotelFolio(models.Model):
                      ])
         folio_ids = reservations.mapped('folio_id.id')
         folios = self.env['hotel.folio'].search([('id','in',folio_ids)])
-        folios.filtered(lambda r: r.invoices_amount >= 0)
+        folios = folios.filtered(lambda r: r.invoices_amount > 0)
         return {
-        'name': _('Checkouts'),
+        'name': _('Pending'),
         'view_type': 'form',
         'view_mode': 'tree,form',
         'res_model': 'hotel.folio',
@@ -617,7 +617,34 @@ class HotelFolio(models.Model):
                 line.reservation_lines = res['commands']
                 line.price_unit = res['total_price']
         self.currency_id = self.env.ref('base.main_company').currency_id
+        #WARNING MESSAGES IN PARTNER FOR FOLIOS
+        if not self.partner_id:
+            return
+        warning = {}
+        title = False
+        message = False
+        partner = self.partner_id
 
+        # If partner has no warning, check its company
+        if partner.sale_warn == 'no-message' and partner.parent_id:
+            partner = partner.parent_id
+
+        if partner.sale_warn != 'no-message':
+            # Block if partner only has warning but parent company is blocked
+            if partner.sale_warn != 'block' and partner.parent_id and partner.parent_id.sale_warn == 'block':
+                partner = partner.parent_id
+            title =  _("Warning for %s") % partner.name
+            message = partner.sale_warn_msg
+            warning = {
+                    'title': title,
+                    'message': message,
+            }
+            if self.partner_id.sale_warn == 'block':
+                self.update({'partner_id': False, 'partner_invoice_id': False, 'partner_shipping_id': False, 'pricelist_id': False})
+                return {'warning': warning}
+
+        if warning:
+            return {'warning': warning}
 
     @api.multi
     def button_dummy(self):
@@ -631,6 +658,9 @@ class HotelFolio(models.Model):
     @api.multi
     def action_done(self):
         self.write({'state': 'done'})
+        for line in self.room_lines:
+            line.write({'state': 'done'})
+
 
     @api.multi
     def action_invoice_create(self, grouped=False, states=None):
