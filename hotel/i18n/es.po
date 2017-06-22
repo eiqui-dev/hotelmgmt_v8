@@ -8,14 +8,15 @@ msgstr ""
 "Project-Id-Version: openobject-addons\n"
 "Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2009-11-26 07:33+0000\n"
-"PO-Revision-Date: 2011-02-15 18:06+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2017-06-20 12:46+0200\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Launchpad-Export-Date: 2012-03-07 05:31+0000\n"
-"X-Generator: Launchpad (build 14907)\n"
+"X-Generator: Poedit 1.8.7.1\n"
+"Last-Translator: \n"
+"Language: es\n"
 
 #. module: hotel
 #: model:ir.ui.menu,name:hotel.menu_open_hotel_folio1_form_tree
@@ -28,8 +29,7 @@ msgid "Recreate Procurement"
 msgstr "Recrear adquisiciones"
 
 #. module: hotel
-#: field:hotel.folio,checkout_date:0
-#: field:hotel_folio.line,checkout_date:0
+#: field:hotel.folio,checkout_date:0 field:hotel_folio.line,checkout_date:0
 msgid "Check Out"
 msgstr "Hora de salida"
 
@@ -139,8 +139,7 @@ msgid "All Folio"
 msgstr "Todos los detalles de los servicios ofrecidos"
 
 #. module: hotel
-#: view:hotel.room:0
-#: field:hotel.room,room_amenities:0
+#: view:hotel.room:0 field:hotel.room,room_amenities:0
 msgid "Room Amenities"
 msgstr "Comodidades de las habitaciones"
 
@@ -217,8 +216,7 @@ msgid " Room Amenities"
 msgstr " Comodidades de habitaciones"
 
 #. module: hotel
-#: field:hotel.folio,checkin_date:0
-#: field:hotel_folio.line,checkin_date:0
+#: field:hotel.folio,checkin_date:0 field:hotel_folio.line,checkin_date:0
 msgid "Check In"
 msgstr "Entradas"
 
@@ -244,15 +242,13 @@ msgid "Untaxed amount"
 msgstr "Base imponible"
 
 #. module: hotel
-#: field:hotel.room_amenities_type,cat_id:0
-#: field:hotel.room_type,cat_id:0
+#: field:hotel.room_amenities_type,cat_id:0 field:hotel.room_type,cat_id:0
 #: field:hotel.service_type,ser_id:0
 msgid "category"
 msgstr "categoría"
 
 #. module: hotel
-#: view:hotel.room:0
-#: field:hotel.room,avail_status:0
+#: view:hotel.room:0 field:hotel.room,avail_status:0
 msgid "Room Status"
 msgstr "Estado de la habitación"
 
@@ -319,9 +315,7 @@ msgid "Amenity Rate"
 msgstr "Tarifa de comodidades"
 
 #. module: hotel
-#: view:hotel.room:0
-#: view:hotel.room_amenities:0
-#: view:hotel.services:0
+#: view:hotel.room:0 view:hotel.room_amenities:0 view:hotel.services:0
 msgid "Procurement"
 msgstr "Adquisición"
 
@@ -356,9 +350,7 @@ msgid "Max Child"
 msgstr "Max Child"
 
 #. module: hotel
-#: view:hotel.room:0
-#: view:hotel.room_amenities:0
-#: view:hotel.services:0
+#: view:hotel.room:0 view:hotel.room_amenities:0 view:hotel.services:0
 msgid "Descriptions"
 msgstr "Descripciones"
 
@@ -400,7 +392,7 @@ msgstr "Servicios del hotel y sus cambios"
 #. module: hotel
 #: view:hotel.folio:0
 msgid "Procurement Corrected"
-msgstr "Procurement Corrected"
+msgstr "Adquisición Corregida"
 
 #. module: hotel
 #: view:hotel.folio:0
@@ -415,7 +407,7 @@ msgstr "Habitación No"
 #. module: hotel
 #: view:hotel.services:0
 msgid "Service rate"
-msgstr "Service rate"
+msgstr "Tarifa de servicio"
 
 #. module: hotel
 #: model:ir.actions.act_window,name:hotel.open_hotel_folio1_form_tree
@@ -424,8 +416,7 @@ msgid "Hotel Folio"
 msgstr "Hotel Folio"
 
 #. module: hotel
-#: field:hotel.folio,room_lines:0
-#: field:hotel.folio,service_lines:0
+#: field:hotel.folio,room_lines:0 field:hotel.folio,service_lines:0
 msgid "unknown"
 msgstr "desconocido"
 
@@ -448,7 +439,7 @@ msgstr "Tipo de comodidades de las habitaciones del hotel"
 #. module: hotel
 #: view:hotel.folio:0
 msgid "Folio Line"
-msgstr "Folio Line"
+msgstr "Línea de Folio"
 
 #. module: hotel
 #: view:hotel.folio:0
@@ -456,16 +447,13 @@ msgid "Date"
 msgstr "Fecha"
 
 #. module: hotel
-#: view:hotel.folio:0
-#: view:hotel.room:0
-#: view:hotel.room_amenities:0
+#: view:hotel.folio:0 view:hotel.room:0 view:hotel.room_amenities:0
 #: view:hotel.services:0
 msgid "Properties"
 msgstr "Propiedades"
 
 #. module: hotel
-#: view:hotel.room_amenities:0
-#: view:hotel.services:0
+#: view:hotel.room_amenities:0 view:hotel.services:0
 msgid "Purchase Description"
 msgstr "Descripción de la compra"
 
@@ -558,9 +546,7 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #. module: hotel
-#: view:hotel.room:0
-#: view:hotel.room_amenities:0
-#: view:hotel.services:0
+#: view:hotel.room:0 view:hotel.room_amenities:0 view:hotel.services:0
 msgid "Information"
 msgstr "Información"
 
@@ -583,8 +569,7 @@ msgid "Hotel Folio1"
 msgstr "Hotel Folio1"
 
 #. module: hotel
-#: view:hotel.room:0
-#: model:ir.model,name:hotel.model_hotel_floor
+#: view:hotel.room:0 model:ir.model,name:hotel.model_hotel_floor
 #: model:ir.ui.menu,name:hotel.menu_open_hotel_floor_form_tree
 msgid "Floor"
 msgstr "Planta"
@@ -617,21 +602,17 @@ msgid "Room Type"
 msgstr "Tipo de habitación"
 
 #. module: hotel
-#: view:hotel.room:0
-#: view:hotel.room_amenities:0
-#: view:hotel.services:0
+#: view:hotel.room:0 view:hotel.room_amenities:0 view:hotel.services:0
 msgid "Description"
 msgstr "Descripción"
 
 #. module: hotel
-#: field:hotel_folio.line,folio_id:0
-#: field:hotel_service.line,folio_id:0
+#: field:hotel_folio.line,folio_id:0 field:hotel_service.line,folio_id:0
 msgid "folio_id"
 msgstr "folio_id"
 
 #. module: hotel
-#: view:hotel.room_amenities:0
-#: view:hotel.services:0
+#: view:hotel.room_amenities:0 view:hotel.services:0
 msgid "Sale Description"
 msgstr "Descripición de venta"
 
@@ -726,7 +707,7 @@ msgstr "Informes"
 #. module: hotel
 #: view:hotel.folio:0
 msgid "Related packings"
-msgstr "Related packings"
+msgstr "Paquetes relacionados"
 
 #. module: hotel
 #: view:hotel.folio:0

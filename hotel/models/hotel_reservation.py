@@ -82,8 +82,7 @@ COLOR_TYPES = {
     'checkout': '#01DF01',
     'dontsell': '#000000',
     'staff': '#FF4000',
-    'directsale': '#8A084B',
-    'to-assign': '#D01CA4',
+    'to-assign': '#DFFF00',
 }
 
 class HotelReservation(models.Model):
@@ -213,8 +212,10 @@ class HotelReservation(models.Model):
                 rec.reserve_color = COLOR_TYPES.get('pre-reservation')
             elif rec.state == 'confirm':
                 rec.reserve_color = COLOR_TYPES.get('reservation')
-            elif rec.state == 'checkin' and difference_checkout.days == 0:
+            elif rec.state == 'booking' and difference_checkout.days == 0:
                 rec.reserve_color = COLOR_TYPES.get('checkout')
+            elif rec.state == 'booking':
+                rec.reserve_color = COLOR_TYPES.get('stay')
             else:
                 rec.reserve_color = "#FFFFFF"
 
@@ -479,6 +480,8 @@ class HotelReservation(models.Model):
             ('checkin','<',self.checkin),
             ('checkout','>',self.checkout)])
         occupied = res_in | res_out | res_full
+
+        occupied = occupied.filtered(lambda r: r.state != 'cancelled')
         rooms_occupied= occupied.mapped('product_id.id')
         domain_rooms = [('isroom','=',True),('id', 'not in', rooms_occupied)]
         if self.room_type_id:
@@ -549,7 +552,8 @@ class HotelReservation(models.Model):
             ('checkin','<',self.checkin),
             ('checkout','>',self.checkout)])
         occupied = res_in | res_out | res_full
-        occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id and r.id != self.id)
+
+        occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id and r.id != self.id and r.state != 'cancelled')
         occupied_name = ','.join(str(x.name) for x in occupied)
         if occupied:
            warning_msg = 'You tried to confirm \

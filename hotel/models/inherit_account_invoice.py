@@ -22,6 +22,7 @@
 from openerp import models, fields, api, _
 
 
+
 class AccountInvoice(models.Model):
 
     _inherit = 'account.invoice'
@@ -34,25 +35,6 @@ class AccountInvoice(models.Model):
             vals.update({'origin': context['invoice_origin']})
         return super(AccountInvoice, self).create(vals)
 
-    @api.depends('residual','amount_total')
-    def update_folio(self):
-        fol = self.env['hotel.folio'].search([('name','=',self.origin)])
-        if fol:
-            inv_pending = 0
-            total_inv = 0
-            total_folio = fol.amount_total
-            for inv in fol.invoice_ids:
-                if inv.type != 'out_refund':
-                    if inv.state == 'draft':
-                        total_inv += inv.amount_total
-                        inv_pending += inv.amount_total
-                    else:
-                        total_inv += inv.amount_total
-                        inv_pending += inv.residual
-            if total_inv < total_folio:
-                inv_pending += total_folio
-            fol.invoices_amount = inv_pending
-            fol.invoices_paid = total_inv - inv_pending
 
     #~ @api.multi
     #~ def confirm_paid(self):
