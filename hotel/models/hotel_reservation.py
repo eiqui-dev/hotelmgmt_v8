@@ -479,10 +479,6 @@ class HotelReservation(models.Model):
             ('checkin','<',self.checkin),
             ('checkout','>',self.checkout)])
         occupied = res_in | res_out | res_full
-        _logger.info(self.checkin)
-        _logger.info(self.env['hotel.folio'].search([('id','=',20)]).room_lines[0].checkin)
-        _logger.info(self.checkout)
-        _logger.info(self.env['hotel.folio'].search([('id','=',20)]).room_lines[0].checkout)
         rooms_occupied= occupied.mapped('product_id.id')
         domain_rooms = [('isroom','=',True),('id', 'not in', rooms_occupied)]
         if self.room_type_id:
@@ -553,8 +549,8 @@ class HotelReservation(models.Model):
             ('checkin','<',self.checkin),
             ('checkout','>',self.checkout)])
         occupied = res_in | res_out | res_full
-        occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id)
-        occupied_name = ','.join(str(x.id) for x in occupied)
+        occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id and r.id != self.id)
+        occupied_name = ','.join(str(x.name) for x in occupied)
         if occupied:
            warning_msg = 'You tried to confirm \
                reservation with room those already reserved in this \
