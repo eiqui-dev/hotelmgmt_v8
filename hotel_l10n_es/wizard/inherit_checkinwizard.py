@@ -102,13 +102,17 @@ class Wizard(models.TransientModel):
         record_id = self.env['hotel.reservation'].browse(self.reservation_id.id)
         record_id.write({
            'cardex_ids':[(0,False,cardex_val)]})
+
+        now_cardex = self.env['cardex'].search([("reservation_id","=",record_id.id),
+            ("partner_id","=",self.partner_id.id),
+            ("enter_date","=",self.enter_date),
+            ("exit_date","=",self.exit_date),
+            ],limit=1)
+
         if record_id.cardex_count > 0:
             record_id.state = 'booking'
 
-
-        #datas = {'ids' : [record_id.cardex_ids]}
-
-        context = { 'ids': record_id.cardex_ids,
+        context = { 'ids': now_cardex.id,
             # 'partner_id': record_id.partner_id,
             # 'enter_date': record_id.cardex_ids.enter_date,
             # 'exit_date': record_id.cardex_ids.exit_date,
