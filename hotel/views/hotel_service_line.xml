@@ -21,7 +21,7 @@
                                     context="{'partner_id':order_partner_id,'quantity':product_uom_qty,'pricelist':parent.pricelist_id,'uom':product_uom}"
                                     invisible="1"/>
                                 <field name="order_partner_id" invisible="1"/>
-                                <field name="folio_id" invisible="0"/>
+                                <field name="folio_id" invisible="1"/>
                             </group>
                             <separator string="Manual Description" colspan="4" />
                             <field name="name" colspan="4" select="2"

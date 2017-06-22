@@ -31,18 +31,33 @@ import time
 
 class ReservationRestriction(models.Model):
     _name ='reservation.restriction'
-    
+
     name = fields.Char('name')
     room_ids = fields.Many2many('hotel.room',string='Rooms')
-    room_type_ids = fields.Many2many('hotel.room.type',string='Room Types')
+    room_type_ids = fields.Many2many('hotel.virtual.room',string='Room Types')
     init_date = fields.Date('From')
     end_date = fields.Date("To")
-    min_nights = fields.Integer("Min. Nights")
-    
-    
-    
-    
-    
-    
+    min_stay = fields.Integer("Min. Nights")
+    min_stay_arrival = fields.Integer("Min. Nights")
+    max_stay = fields.Integer("Min. Nights")
+    no_ota = fields.Boolean('No Ota')
+    close = fields.Selection([
+        ('open', 'Open'),
+        ('close', 'Close'),
+        ('close_arrival', 'Close Arrival')],
+        'Close')
+    no_checkout= fields.Boolean('No Checkout')
+    mo = fields.Boolean('Mon')
+    tu = fields.Boolean('Tue')
+    we = fields.Boolean('Wed')
+    th = fields.Boolean('Thu')
+    fr = fields.Boolean('Fri')
+    sa = fields.Boolean('Sat')
+    su = fields.Boolean('Sun')
 
-    
+
+
+
+
+
+

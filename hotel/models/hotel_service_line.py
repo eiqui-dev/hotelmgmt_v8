@@ -98,6 +98,9 @@ class HotelServiceLine(models.Model):
         if 'folio_id' in vals:
             folio = self.env['hotel.folio'].browse(vals['folio_id'])
             vals.update({'order_id': folio.order_id.id})
+        if 'ser_room_line' in vals:
+            room_line = self.env['hotel.reservation'].browse(vals['ser_room_line'])
+            vals.update({'order_id': room_line.folio_id.order_id.id,'folio_id': room_line.folio_id.id})
         return super(HotelServiceLine, self).create(vals)
 
     @api.multi
@@ -128,6 +131,17 @@ class HotelServiceLine(models.Model):
             self.price_unit = tax_obj._fix_tax_included_price(prod.price,
                                                               prod.taxes_id,
                                                               self.tax_id)
+        elif self.product_id and self.ser_room_line:
+            self.folio_id = self.ser_room_line.folio_id
+            self.name = self.product_id.name
+            self.price_unit = self.product_id.lst_price
+            self.product_uom = self.product_id.uom_id
+            tax_obj = self.env['account.tax']
+            prod = self.product_id
+            self.price_unit = tax_obj._fix_tax_included_price(prod.price,
+                                                              prod.taxes_id,
+                                                              self.tax_id)
+
         #~ _logger.info(self._context)
         #~ if 'folio_id' in self._context:
             #~ _logger.info(self._context)
@@ -136,6 +150,13 @@ class HotelServiceLine(models.Model):
             #~ room_ids = room_lines.mapped('id')
             #~ domain_rooms.append(('id','in',room_ids))
             #~ return {'domain': {'ser_room_line': domain_rooms}}
+
+    #~ @api.onchange('folio_id')
+    #~ def folio_id_change(self):
+        #~ self.ensure_one()
+        #~ _logger.info(self.mapped('folio_id.room_lines'))
+        #~ rooms = self.mapped('folio_id.room_lines.id')
+        #~ return {'domain': {'ser_room_line': rooms}}
 
     @api.onchange('product_uom')
     def product_uom_change(self):

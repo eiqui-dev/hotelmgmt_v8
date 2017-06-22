@@ -27,6 +27,9 @@ from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 import datetime
 import time
+import pytz
+import logging
+_logger = logging.getLogger(__name__)
 
 
 def _offset_format_timestamp1(src_tstamp_str, src_format, dst_format,
@@ -167,7 +170,7 @@ class HotelFolio(models.Model):
     _description = 'hotel folio new'
     _rec_name = 'order_id'
     _order = 'id'
-    _inherit = ['ir.needaction_mixin']
+    _inherit = ['ir.needaction_mixin','mail.thread']
 
     name = fields.Char('Folio Number', readonly=True, index=True,
                        default='New')
@@ -212,9 +215,9 @@ class HotelFolio(models.Model):
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
-    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins',store=True)
-    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts',store=True)
-    partner_internal_comment = fields.Text (string='Internal Partner Notes',related='partner_id.comment')
+    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins')
+    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts')
+    partner_internal_comment = fields.Text(string='Internal Partner Notes',related='partner_id.comment')
 
     @api.multi
     def _compute_checkins(self):
@@ -324,7 +327,7 @@ class HotelFolio(models.Model):
         reservations = self.env['hotel.reservation'].search([
                     ('checkin','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('checkin','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('state','!=','booking')])
+                    ('state','not in',['booking','cancelled'])])
         folios = reservations.mapped('folio_id.id')
         return {
         'name': _('Checkins'),
@@ -340,7 +343,7 @@ class HotelFolio(models.Model):
         reservations = self.env['hotel.reservation'].search([
                     ('checkout','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('checkout','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('state','!=','booking')])
+                    ])
         folios = reservations.mapped('folio_id.id')
         return {
         'name': _('Checkouts'),
@@ -358,9 +361,9 @@ class HotelFolio(models.Model):
                      ])
         folio_ids = reservations.mapped('folio_id.id')
         folios = self.env['hotel.folio'].search([('id','in',folio_ids)])
-        folios.filtered(lambda r: r.invoices_amount >= 0)
+        folios = folios.filtered(lambda r: r.invoices_amount > 0)
         return {
-        'name': _('Checkouts'),
+        'name': _('Pending'),
         'view_type': 'form',
         'view_mode': 'tree,form',
         'res_model': 'hotel.folio',
@@ -507,31 +510,7 @@ class HotelFolio(models.Model):
                 vals = {}
             vals['name'] = self.env['ir.sequence'].next_by_code('hotel.folio')
             folio_id = super(HotelFolio, self).create(vals)
-            #~ folio_room_line_obj = self.env['folio.room.line']
-            #~ h_room_obj = self.env['hotel.room']
-            #~ try:
-                #~ for rec in folio_id:
-                    #~ if not rec.reservation_id:
-                        #~ for room_rec in rec.room_lines:
-                            #~ prod = room_rec.product_id.name
-                            #~ room_obj = h_room_obj.search([('name', '=', prod)])
-                            #~ vals = {'room_id': room_obj.id,
-                                    #~ 'checkin': rec.checkin,
-                                    #~ 'checkout': rec.checkout,
-                                    #~ 'folio_id': rec.id,
-                                    #~ }
-                            #~ folio_room_line_obj.create(vals)
-            #~ except:
-                #~ for rec in folio_id:
-                    #~ for room_rec in rec.room_lines:
-                        #~ prod = room_rec.product_id.name
-                        #~ room_obj = h_room_obj.search([('name', '=', prod)])
-                        #~ vals = {'room_id': room_obj.id,
-                                #~ 'checkin': rec.checkin,
-                                #~ 'checkout': rec.checkout,
-                                #~ 'folio_id': rec.id,
-                                #~ }
-                        #~ folio_room_line_obj.create(vals)
+
         return folio_id
 
     #~ @api.multi
@@ -625,7 +604,47 @@ class HotelFolio(models.Model):
                 self.partner_invoice_id = partner_rec.id
                 self.partner_shipping_id = partner_rec.id
                 self.pricelist_id = partner_rec.property_product_pricelist.id
+            for line in self.room_lines:
+                _logger.info(line.id)
+                tz = self._context.get('tz')
+                chkin_dt = fields.Datetime.from_string(line.checkin)
+                chkout_dt = fields.Datetime.from_string(line.checkout)
+                if tz:
+                    chkin_dt = chkin_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+                    chkout_dt = chkout_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+                days_diff = abs((chkout_dt - chkin_dt).days)
+                res = line.prepare_reservation_lines(chkin_dt, days_diff)
+                line.reservation_lines = res['commands']
+                line.price_unit = res['total_price']
         self.currency_id = self.env.ref('base.main_company').currency_id
+        #WARNING MESSAGES IN PARTNER FOR FOLIOS
+        if not self.partner_id:
+            return
+        warning = {}
+        title = False
+        message = False
+        partner = self.partner_id
+
+        # If partner has no warning, check its company
+        if partner.sale_warn == 'no-message' and partner.parent_id:
+            partner = partner.parent_id
+
+        if partner.sale_warn != 'no-message':
+            # Block if partner only has warning but parent company is blocked
+            if partner.sale_warn != 'block' and partner.parent_id and partner.parent_id.sale_warn == 'block':
+                partner = partner.parent_id
+            title =  _("Warning for %s") % partner.name
+            message = partner.sale_warn_msg
+            warning = {
+                    'title': title,
+                    'message': message,
+            }
+            if self.partner_id.sale_warn == 'block':
+                self.update({'partner_id': False, 'partner_invoice_id': False, 'partner_shipping_id': False, 'pricelist_id': False})
+                return {'warning': warning}
+
+        if warning:
+            return {'warning': warning}
 
     @api.multi
     def button_dummy(self):
@@ -639,6 +658,9 @@ class HotelFolio(models.Model):
     @api.multi
     def action_done(self):
         self.write({'state': 'done'})
+        for line in self.room_lines:
+            line.write({'state': 'done'})
+
 
     @api.multi
     def action_invoice_create(self, grouped=False, states=None):

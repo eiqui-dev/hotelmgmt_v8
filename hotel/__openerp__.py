@@ -32,6 +32,7 @@
         'product_uos',
         'sale_stock',
         'report',
+        'warning',
     ],
     'license': "",
     'demo': ['data/hotel_data.xml'],
