@@ -93,6 +93,20 @@ class Wizard(models.TransientModel):
             related='partner_id.code_ine')
     category_id_cardex = fields.Many2many('res.partner.category', 'id', related='partner_id.category_id', required=True)
 
+    @api.model
+    def pdf_viajero(self,cardex_num):
+        _logger.info('---TTTTTT Imprimir el PDF del Viajero TTTTTTTT----')
+        _logger.info(cardex_num)
+        _logger.info(self)
+        return {
+    "type": "ir.actions.report.xml",
+    "res_model": "cardex",
+    "report_name": "report.viajero",
+    "context": "35",
+    "target": "new",
+}
+
+
     @api.multi
     def action_save_check(self):
         cardex_val={
@@ -103,28 +117,22 @@ class Wizard(models.TransientModel):
         record_id.write({
            'cardex_ids':[(0,False,cardex_val)]})
 
-        now_cardex = self.env['cardex'].search([("reservation_id","=",record_id.id),
-            ("partner_id","=",self.partner_id.id),
-            ("enter_date","=",self.enter_date),
-            ("exit_date","=",self.exit_date),
-            ],limit=1)
+        # now_cardex = self.env['cardex'].search([("reservation_id","=",record_id.id),
+        #     ("partner_id","=",self.partner_id.id),
+        #     ("enter_date","=",self.enter_date),
+        #     ("exit_date","=",self.exit_date),
+        #     ],limit=1)
 
         if record_id.cardex_count > 0:
             record_id.state = 'booking'
 
-        context = { 'ids': now_cardex.id,
+        #context = { 'ids': now_cardex.id,
             # 'partner_id': record_id.partner_id,
             # 'enter_date': record_id.cardex_ids.enter_date,
             # 'exit_date': record_id.cardex_ids.exit_date,
             # 'reserva_id': record_id.cardex_ids.reservation_id,
             # 'hidden_cardex': True,
             # 'edit_cardex': True 
-            }
-
-        return {
-    "type": "ir.actions.report.xml",
-    "res_model": "cardex",
-    "report_name": "report.viajero",
-    "context": context,
-    "target": "new",
-}
+        #    }
+        self.pdf_viajero(record_id.cardex_ids)
+        return {'type': 'ir.actions.act_window_close'}
