@@ -347,7 +347,7 @@ class HotelFolio(models.Model):
         reservations = self.env['hotel.reservation'].search([
                     ('checkout','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('checkout','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ])
+                    ('state','=','booking')])
         folios = reservations.mapped('folio_id.id')
         return {
             'name': _('Checkouts'),

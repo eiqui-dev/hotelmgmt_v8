@@ -93,4 +93,48 @@ class Wizard(models.TransientModel):
             related='partner_id.code_ine')
     category_id_cardex = fields.Many2many('res.partner.category', 'id', related='partner_id.category_id', required=True)
 
+    @api.model
+    def pdf_viajero(self,cardex_ids,context):
+        _logger.info('---TTTTTT Imprimir el PDF del Viajero TTTTTTTT----')
+        _logger.info(cardex_ids)
+        cardex = self.env['cardex'].search([('id','=',cardex_ids)])
+        _logger.info(cardex)
+        #~ data['cardex'] = cardex_ids
+        #~ datas = {
+             #~ 'ids': cardex_ids,
+             #~ 'model': 'cardex',
+             #~ 'form': data
+        #~ }
+        #~ return self.pool['report'].get_action(self, 'report.viajero', data=datas, context=context)
 
+    @api.multi
+    def action_save_check(self):
+        cardex_val={
+          'partner_id':self.partner_id.id,
+          'enter_date':self.enter_date,
+          'exit_date':self.exit_date}
+        record_id = self.env['hotel.reservation'].browse(self.reservation_id.id)
+        old_cardex = self.env['cardex'].search([('reservation_id','=',record_id.id)])
+        record_id.write({
+           'cardex_ids':[(0,False,cardex_val)]})
+        cardex = self.env['cardex'].search([('reservation_id','=',record_id.id)]) - old_cardex
+        # now_cardex = self.env['cardex'].search([("reservation_id","=",record_id.id),
+        #     ("partner_id","=",self.partner_id.id),
+        #     ("enter_date","=",self.enter_date),
+        #     ("exit_date","=",self.exit_date),
+        #     ],limit=1)
+
+        if record_id.cardex_count > 0:
+            record_id.state = 'booking'
+
+        #context = { 'ids': now_cardex.id,
+            # 'partner_id': record_id.partner_id,
+            # 'enter_date': record_id.cardex_ids.enter_date,
+            # 'exit_date': record_id.cardex_ids.exit_date,
+            # 'reserva_id': record_id.cardex_ids.reservation_id,
+            # 'hidden_cardex': True,
+            # 'edit_cardex': True
+        #    }
+        context = {'partner_id': cardex.partner_id,'enter_date': cardex.enter_date,'exit_date': cardex.exit_date,'reserva_id': cardex.id, 'hidden_cardex': True, 'edit_cardex': True }
+        self.pdf_viajero(cardex.id, context)
+        return {'type': 'ir.actions.act_window_close'}
