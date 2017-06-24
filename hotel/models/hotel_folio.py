@@ -208,9 +208,9 @@ class HotelFolio(models.Model):
     currrency_ids = fields.One2many('currency.exchange', 'folio_no',
                                     readonly=True)
     hotel_invoice_id = fields.Many2one('account.invoice', 'Invoice')
-    invoices_amount = fields.Monetary(compute='compute_invoices_amount')
+    invoices_amount = fields.Monetary(compute='compute_invoices_amount',store=True)
     refund_amount = fields.Monetary(compute='_compute_invoices_refund')
-    invoices_paid = fields.Monetary(compute='compute_invoices_amount')
+    invoices_paid = fields.Monetary(compute='compute_invoices_amount',store=True)
     booking_pending = fields.Integer ('Booking pending', compute='_compute_booking_pending')
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
@@ -252,7 +252,7 @@ class HotelFolio(models.Model):
         #~ self.env['hotel.folio'].search([('id','in',folios_in_ids)]).write({'checkins_reservations':True})
         #~ self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
 
-    @api.multi
+    @api.depends('invoice_ids.residual','invoice_ids.amount_total')
     def compute_invoices_amount(self):
         for fol in self:
             inv_pending = 0
@@ -270,6 +270,8 @@ class HotelFolio(models.Model):
                 inv_pending = total_folio - total_inv
             fol.invoices_amount = inv_pending
             fol.invoices_paid = total_folio - inv_pending
+            _logger.info("ONCHANGEEEE FULLLL")
+            _logger.info(fol.invoices_amount)
 
     @api.multi
     def _compute_invoices_refund(self):
@@ -324,18 +326,20 @@ class HotelFolio(models.Model):
 
     @api.multi
     def action_folios_in(self):
+        checkin_dt = datetime.datetime.utcnow().replace(hour=00, minute=00, second=00)
+        checkout_dt = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59)
         reservations = self.env['hotel.reservation'].search([
-                    ('checkin','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('checkin','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkin','>=',checkin_dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkin','<=',checkout_dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('state','not in',['booking','cancelled'])])
         folios = reservations.mapped('folio_id.id')
         return {
-        'name': _('Checkins'),
-        'view_type': 'form',
-        'view_mode': 'tree,form',
-        'res_model': 'hotel.folio',
-        'type': 'ir.actions.act_window',
-        'domain': [('id','in', folios)]
+            'name': _('Checkins'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'hotel.folio',
+            'type': 'ir.actions.act_window',
+            'domain': [('id','in', folios)]
         }
 
     @api.multi
@@ -346,12 +350,12 @@ class HotelFolio(models.Model):
                     ])
         folios = reservations.mapped('folio_id.id')
         return {
-        'name': _('Checkouts'),
-        'view_type': 'form',
-        'view_mode': 'tree,form',
-        'res_model': 'hotel.folio',
-        'type': 'ir.actions.act_window',
-        'domain': [('id','in', folios)]
+            'name': _('Checkouts'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'hotel.folio',
+            'type': 'ir.actions.act_window',
+            'domain': [('id','in', folios)]
         }
 
     @api.multi
