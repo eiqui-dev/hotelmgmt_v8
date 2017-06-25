@@ -22,18 +22,14 @@
                         <group>
                             <group colspan="4" col="4">
                                 <group>
-                                    <field name="virtual_room_id"
-                                        context="{'partner_id':parent.partner_id,'quantity':product_uom_qty,'pricelist':parent.pricelist_id,'uom':product_uom}"/>/>
-                                    <field name="room_type_id"
-                                        context="{'partner_id':parent.partner_id,'quantity':product_uom_qty,'pricelist':parent.pricelist_id,'uom':product_uom}"/>
+                                    <field name="virtual_room_id"/>
+                                    <field name="room_type_id"/>
                                 </group>
                                 <group>
                                     <field name="product_uom_qty"
-                                        context="{'partner_id':parent.partner_id,'quantity':product_uom_qty,'pricelist':parent.pricelist_id,'uom':product_uom}"
                                         invisible="1" />
                                     <field name="invoice_status" />
                                     <field name="product_id"
-                                        context="{'partner_id':parent.partner_id,'quantity':product_uom_qty,'pricelist':parent.pricelist_id,'uom':product_uom}"
                                         select="1" domain="[('isroom','=',True)]"
                                         string="Room No" />
                                     <field name="product_uom" string="Rent(UOM)" invisible="1" />

@@ -289,7 +289,7 @@ class HotelReservation(models.Model):
             self.state = 'done'
 
     @api.model
-    def create(self, vals, check=True):
+    def create(self, vals):
         """
         Overrides orm create method.
         @param self: The object pointer
@@ -307,12 +307,12 @@ class HotelReservation(models.Model):
 
     #~ @api.multi
     #~ def unlink(self):
-        """
-        Overrides orm unlink method.
-        @param self: The object pointer
-        @return: True/False.
-        """
-        sale_line_obj = self.env['sale.order.line']
+#         """
+#         Overrides orm unlink method.
+#         @param self: The object pointer
+#         @return: True/False.
+#         """
+#         sale_line_obj = self.env['sale.order.line']
         #~ fr_obj = self.env['folio.room.line']
         #~ for line in self:
             #~ if line.order_line_id:
