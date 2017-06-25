@@ -480,7 +480,6 @@ class HotelReservation(models.Model):
             ('checkin','<',self.checkin),
             ('checkout','>',self.checkout)])
         occupied = res_in | res_out | res_full
-
         occupied = occupied.filtered(lambda r: r.state != 'cancelled')
         rooms_occupied= occupied.mapped('product_id.id')
         domain_rooms = [('isroom','=',True),('id', 'not in', rooms_occupied)]
@@ -552,7 +551,6 @@ class HotelReservation(models.Model):
             ('checkin','<',self.checkin),
             ('checkout','>',self.checkout)])
         occupied = res_in | res_out | res_full
-
         occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id and r.id != self.id and r.state != 'cancelled')
         occupied_name = ','.join(str(x.name) for x in occupied)
         if occupied:
