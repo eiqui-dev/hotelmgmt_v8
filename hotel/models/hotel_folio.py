@@ -184,13 +184,11 @@ class HotelFolio(models.Model):
                                     #~ default=_get_checkout)
     room_lines = fields.One2many('hotel.reservation', 'folio_id',
                                  readonly=True,
-                                 states={'draft': [('readonly', False)],
-                                         'sent': [('readonly', False)]},
+                                 states={'done': [('readonly', False)]},
                                  help="Hotel room reservation detail.")
     service_lines = fields.One2many('hotel.service.line', 'folio_id',
                                     readonly=True,
-                                    states={'draft': [('readonly', False)],
-                                            'sent': [('readonly', False)]},
+                                    states={'done': [('readonly', False)]},
                                     help="Hotel services detail provide to"
                                     "customer and it will include in "
                                     "main Invoice.")
@@ -326,11 +324,16 @@ class HotelFolio(models.Model):
 
     @api.multi
     def action_folios_in(self):
-        checkin_dt = datetime.datetime.utcnow().replace(hour=00, minute=00, second=00)
-        checkout_dt = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59)
+        checkin_dt = datetime.datetime.now().replace(hour=00, minute=00, second=00)
+        checkout_dt = datetime.datetime.now().replace(hour=23, minute=59, second=59)
+        local = pytz.timezone(self.env.context.get('tz','UTC'))
+        local_dt_in = local.localize(checkin_dt, is_dst=False)
+        utc_dt_in = local_dt_in.astimezone(pytz.utc)
+        local_dt_out = local.localize(checkin_dt, is_dst=False)
+        utc_dt_out = local_dt_out.astimezone(pytz.utc)
         reservations = self.env['hotel.reservation'].search([
-                    ('checkin','>=',checkin_dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('checkin','<=',checkout_dt.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkin','>=',utc_dt_in.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkin','<=',utc_dt_out.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('state','not in',['booking','cancelled'])])
         folios = reservations.mapped('folio_id.id')
         return {
@@ -344,9 +347,16 @@ class HotelFolio(models.Model):
 
     @api.multi
     def action_folios_out(self):
+        checkin_dt = datetime.datetime.now().replace(hour=00, minute=00, second=00)
+        checkout_dt = datetime.datetime.now().replace(hour=23, minute=59, second=59)
+        local = pytz.timezone(self.env.context.get('tz','UTC'))
+        local_dt_in = local.localize(checkin_dt, is_dst=False)
+        utc_dt_in = local_dt_in.astimezone(pytz.utc)
+        local_dt_out = local.localize(checkin_dt, is_dst=False)
+        utc_dt_out = local_dt_out.astimezone(pytz.utc)
         reservations = self.env['hotel.reservation'].search([
-                    ('checkout','>=',datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('checkout','<=',datetime.datetime.now().replace(hour=23, minute=59, second=59).strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkout','>=',utc_dt_in.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
+                    ('checkout','<=',utc_dt_out.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
                     ('state','=','booking')])
         folios = reservations.mapped('folio_id.id')
         return {

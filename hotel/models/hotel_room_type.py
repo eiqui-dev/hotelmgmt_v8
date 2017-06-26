@@ -29,5 +29,6 @@ class HotelRoomType(models.Model):
 
     cat_id = fields.Many2one('product.category', 'category', required=True,
                              delegate=True, select=True, ondelete='cascade')
-    code_type = fields.Char('Code')
+    code_type = fields.Char('Code',required=True)
 
+    _sql_constraints = [('code_type_unique','unique(code_type)', 'code must be unique!')]
