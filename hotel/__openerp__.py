@@ -38,7 +38,7 @@
     'demo': ['data/hotel_data.xml'],
     'data': [
         'security/hotel_security.xml',
-        #'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'wizard/hotel_wizard.xml',
         'wizard/checkinwizard.xml',
         'views/hotel_sequence.xml',
