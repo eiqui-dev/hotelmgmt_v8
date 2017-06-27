@@ -394,29 +394,24 @@ class HotelReservation(models.Model):
 
     @api.onchange('checkin', 'checkout', 'product_id')
     def on_change_checkin_checkout_product_id(self):
-        _logger.info("PASA ONCHANGE 1")
-        _logger.info(self.checkin)
-        _logger.info(self.checkout)
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
             self.checkout = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
 
-        if self._context.get('regenerate', True):
-            self.name = self.product_id.name
-            self.product_uom = self.product_id.uom_id
-            # UTC -> Local
-            _logger.info(self.id)
-            tz = self._context.get('tz')
-            chkin_dt = fields.Datetime.from_string(self.checkin)
-            chkout_dt = fields.Datetime.from_string(self.checkout)
-            if tz:
-                chkin_dt = chkin_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
-                chkout_dt = chkout_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
-            days_diff = abs((chkout_dt - chkin_dt).days)
-            res = self.prepare_reservation_lines(chkin_dt, days_diff)
-            self.reservation_lines = res['commands']
-            self.price_unit = res['total_price']
+        self.name = self.product_id.name
+        self.product_uom = self.product_id.uom_id
+        # UTC -> Local
+        tz = self._context.get('tz')
+        chkin_dt = fields.Datetime.from_string(self.checkin)
+        chkout_dt = fields.Datetime.from_string(self.checkout)
+        if tz:
+            chkin_dt = chkin_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+            chkout_dt = chkout_dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz))
+        days_diff = abs((chkout_dt - chkin_dt).days)
+        res = self.prepare_reservation_lines(chkin_dt, days_diff)
+        self.reservation_lines = res['commands']
+        self.price_unit = res['total_price']
 
     @api.model
     def prepare_reservation_lines(self, datefrom, days):
