@@ -329,7 +329,7 @@ class HotelFolio(models.Model):
         local = pytz.timezone(self.env.context.get('tz','UTC'))
         local_dt_in = local.localize(checkin_dt, is_dst=False)
         utc_dt_in = local_dt_in.astimezone(pytz.utc)
-        local_dt_out = local.localize(checkin_dt, is_dst=False)
+        local_dt_out = local.localize(checkout_dt, is_dst=False)
         utc_dt_out = local_dt_out.astimezone(pytz.utc)
         reservations = self.env['hotel.reservation'].search([
                     ('checkin','>=',utc_dt_in.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
