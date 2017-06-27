@@ -469,7 +469,6 @@ class HotelReservation(models.Model):
                 myduration = dur.days
             else:
                 myduration = dur.days + 1
-        self.product_uom_qty = myduration
         res_in = self.env['hotel.reservation'].search([
             ('checkin','>=',self.checkin),
             ('checkin','<=',self.checkout)])
