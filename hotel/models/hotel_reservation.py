@@ -341,16 +341,16 @@ class HotelReservation(models.Model):
                             product_id=None)
         return True
 
-    @api.onchange('product_id')
-    def product_id_change(self):
-        if self.product_id and self.folio_id.partner_id:
-            self.name = self.product_id.name
-            self.product_uom = self.product_id.uom_id
-            tax_obj = self.env['account.tax']
-            prod = self.product_id
-            self.price_unit = tax_obj._fix_tax_included_price(prod.price,
-                                                              prod.taxes_id,
-                                                              self.tax_id)
+#     @api.onchange('product_id')
+#     def product_id_change(self):
+#         if self.product_id and self.folio_id.partner_id:
+#             self.name = self.product_id.name
+#             self.product_uom = self.product_id.uom_id
+#             tax_obj = self.env['account.tax']
+#             prod = self.product_id
+#             self.price_unit = tax_obj._fix_tax_included_price(prod.price,
+#                                                               prod.taxes_id,
+#                                                               self.tax_id)
 
             #~ price_list_global = self.env['product.pricelist.item'].search([
             #~ ('pricelist_id', '=', self.folio_id.pricelist_id.id),
@@ -372,29 +372,25 @@ class HotelReservation(models.Model):
 
 
 
-    @api.onchange('product_uom')
-    def product_uom_change(self):
-        if not self.product_uom:
-            self.price_unit = 0.0
-            return
-        self.price_unit = self.product_id.lst_price
-        if self.folio_id.partner_id:
-            prod = self.product_id.with_context(
-                lang=self.folio_id.partner_id.lang,
-                partner=self.folio_id.partner_id.id,
-                quantity=1,
-                date_order=self.folio_id.date_order,
-                pricelist=self.folio_id.pricelist_id.id,
-                uom=self.product_uom.id
-            )
-            tax_obj = self.env['account.tax']
-            self.price_unit = tax_obj._fix_tax_included_price(prod.price,
-                                                              prod.taxes_id,
-                                                              self.tax_id)
-
-    @api.onchange('reservation_lines')
-    def on_change_reservation_lines(self):
-        self.price_unit = sum(self.reservation_lines.mapped('price'))
+#     @api.onchange('product_uom')
+#     def product_uom_change(self):
+#         if not self.product_uom:
+#             self.price_unit = 0.0
+#             return
+#         self.price_unit = self.product_id.lst_price
+#         if self.folio_id.partner_id:
+#             prod = self.product_id.with_context(
+#                 lang=self.folio_id.partner_id.lang,
+#                 partner=self.folio_id.partner_id.id,
+#                 quantity=1,
+#                 date_order=self.folio_id.date_order,
+#                 pricelist=self.folio_id.pricelist_id.id,
+#                 uom=self.product_uom.id
+#             )
+#             tax_obj = self.env['account.tax']
+#             self.price_unit = tax_obj._fix_tax_included_price(prod.price,
+#                                                               prod.taxes_id,
+#                                                               self.tax_id)
 
     @api.onchange('checkin', 'checkout', 'product_id')
     def on_change_checkin_checkout_product_id(self):
@@ -406,8 +402,9 @@ class HotelReservation(models.Model):
         if not self.checkout:
             self.checkout = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
 
-
         if self._context.get('regenerate', True):
+            self.name = self.product_id.name
+            self.product_uom = self.product_id.uom_id
             # UTC -> Local
             _logger.info(self.id)
             tz = self._context.get('tz')
@@ -423,6 +420,7 @@ class HotelReservation(models.Model):
 
     @api.model
     def prepare_reservation_lines(self, datefrom, days):
+        tax_obj = self.env['account.tax']
         total_price = 0.0
         cmds = [(5, False, False)]
         for i in range(0, days):
@@ -434,7 +432,9 @@ class HotelReservation(models.Model):
                 quantity=1,
                 date_order=ndate_str,
                 pricelist=self.order_id.pricelist_id.id)
-            line_price = product_id.list_price
+            line_price = tax_obj._fix_tax_included_price(product_id.price,
+                                                         product_id.taxes_id,
+                                                         self.tax_id)
             cmds.append((0, False, {
                 'date': ndate_str,
                 'price': line_price
