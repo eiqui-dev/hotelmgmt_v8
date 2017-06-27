@@ -183,12 +183,12 @@ class HotelFolio(models.Model):
                                     #~ states={'draft': [('readonly', False)]},
                                     #~ default=_get_checkout)
     room_lines = fields.One2many('hotel.reservation', 'folio_id',
-                                 readonly=True,
-                                 states={'done': [('readonly', False)]},
+                                 readonly=False,
+                                 states={'done': [('readonly', True)]},
                                  help="Hotel room reservation detail.")
     service_lines = fields.One2many('hotel.service.line', 'folio_id',
-                                    readonly=True,
-                                    states={'done': [('readonly', False)]},
+                                    readonly=False,
+                                    states={'done': [('readonly', True)]},
                                     help="Hotel services detail provide to"
                                     "customer and it will include in "
                                     "main Invoice.")
