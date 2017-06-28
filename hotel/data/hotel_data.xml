@@ -51,21 +51,25 @@
 
         <record id="rooms" model="hotel.room.type">
             <field name="name">All Rooms</field>
+            <field name="code_type">ALL</field>
             <field name="isroomtype">1</field>
         </record>
         <record id="hotel_room_type_1" model="hotel.room.type">
             <field name="parent_id" search="[('isroomtype','=',True), ('name', '=', 'All Rooms')]"/>
             <field name="name">Single</field>
+            <field name="code_type">SNG</field>
             <field name="isroomtype">1</field>
         </record>
         <record id="hotel_room_type_2" model="hotel.room.type">
             <field name="parent_id" search="[('isroomtype','=',True), ('name', '=', 'All Rooms')]"/>
             <field name="name">Double</field>
+            <field name="code_type">DBL</field>
             <field name="isroomtype">1</field>
         </record>
         <record id="hotel_room_type_3" model="hotel.room.type">
              <field name="parent_id" search="[('isroomtype','=',True), ('name', '=', 'All Rooms')]"/>
              <field name="name">Triple</field>
+             <field name="code_type">TRP</field>
              <field name="isroomtype">1</field>
         </record>
 
