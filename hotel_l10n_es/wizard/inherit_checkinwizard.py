@@ -105,7 +105,10 @@ class Wizard(models.TransientModel):
 #              'model': 'cardex',
 #              'form': data
 #         }
-        return self.env['report'].get_action(cardex, 'report.viajero')
+        # FIXME: Hackish solution for close & print (https://www.odoo.com/es_ES/forum/ayuda-1/question/close-wizard-after-print-report-86786)
+        action_report = self.env['report'].get_action(cardex, 'report.viajero')
+        del action_report['report_type']
+        return action_report
 
     @api.multi
     def action_save_check(self):
