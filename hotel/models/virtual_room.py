@@ -91,7 +91,8 @@ class VirtualRoom(models.Model):
             ('checkout','>',checkout)])
         occupied = res_in | res_out | res_full
         occupied &= res
-        rooms_occupied= occupied.mapped('product_id.id')
+        occupied = occupied.filtered(lambda r: r.state != 'cancelled')
+        rooms_occupied = occupied.mapped('product_id.id')
         free_rooms = self.env['hotel.room'].search([('product_id.id','not in',rooms_occupied)])
         if virtual_room_id:
             virtual_room = self.env['hotel.virtual.room'].search([('id','=',virtual_room_id)])
