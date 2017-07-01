@@ -453,7 +453,8 @@ class HotelFolio(models.Model):
         @return: raise warning depending on the validation
         '''
         folio_rooms = []
-        for room in self[0].room_lines:
+        rooms = self[0].room_lines.filtered(lambda r: r.state != 'cancelled')
+        for room in rooms:
             if room.product_id.id in folio_rooms:
                 raise ValidationError(_('You Cannot Take Same Room Twice'))
             folio_rooms.append(room.product_id.id)
