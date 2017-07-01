@@ -252,31 +252,19 @@ class HotelFolio(models.Model):
         #~ self.env['hotel.folio'].search([('id','in',folios_in_ids)]).write({'checkins_reservations':True})
         #~ self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
 
-    #~ @api.depends('invoice_ids.residual','invoice_ids.amount_total')
-    @api.model
+    @api.depends('amount_total','room_lines','service_lines')
+    @api.multi
     def compute_invoices_amount(self):
-        ensure_one()
-        inv_pending = 0
-        total_inv = 0
-        total_folio = fol.amount_total
-        for inv in self.invoice_ids:
-            if inv.type != 'out_refund':
-                if inv.state == 'draft':
-                    total_inv += inv.amount_total
-                    inv_pending += inv.amount_total
-                else:
-                    total_inv += inv.amount_total
-                    inv_pending += inv.residual
-        if total_inv < total_folio:
-            inv_pending = total_folio - total_inv
-        _logger.info(fol)
-        paid = total_folio - inv_pending
-        self.write({'invoices_amount': inv_pending})
-        self.write({'invoices_paid': paid})
-        _logger.info("ONCHANGEEEE FULLLL")
-        _logger.info(fol.name)
-        _logger.info(fol.invoices_amount)
+        self.ensure_one()
+        amount_pending = 0
+        total_paid = 0
+        payments = self.env['account.payment'].search(['|',('invoice_ids','in',self.invoice_ids.ids),('folio_id','=',self.id)])
+        total_paid = sum(pay.amount for pay in payments)
+        self.invoices_amount = self.amount_total - total_paid
+        self.invoices_paid = total_paid
 
+
+ #TODO: SUSTITUIR POR METODO EN account_payment
     @api.multi
     def _compute_invoices_refund(self):
         self.ensure_one()
@@ -287,6 +275,23 @@ class HotelFolio(models.Model):
             if inv.type == 'out_refund':
                 total_inv += inv.amount_total
         self.refund_amount = total_inv
+
+    @api.multi
+    def action_pay(self):
+        self.ensure_one()
+        partner = self.partner_id.id
+        amount = self.invoices_amount
+        view_id = self.env.ref('hotel.view_account_payment_folio_form').id
+        return{
+        'name': _('Register Payment'),
+        'view_type': 'form',
+        'view_mode': 'form',
+        'res_model': 'account.payment',
+        'type': 'ir.actions.act_window',
+        'view_id': view_id,
+        'context': {'default_folio_id': self.id,'default_amount':amount,'default_payment_type':'inbound','default_partner_type':'customer','default_partner_id':partner},
+        'target': 'new'
+        }
 
     @api.multi
     def action_invoices(self):
