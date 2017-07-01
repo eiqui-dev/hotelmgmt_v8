@@ -11,27 +11,32 @@
                 <form string="Reservation" >
                     <header>
                         <!--<button name="send_reservation_mail" type="object" string="Send Reservation Email" states="confirm" class="oe_highlight"/>-->
-                        <button name="confirm" string="Confirm" states="draft" class="oe_highlight"/>
-                        <button name="cancel" string="Cancel Reservation" states="draft,confirm" class="oe_highlight"/>
-                        <button name="draft" string="Set to Draft" states="cancel" class="oe_highlight"/>
+                        <button name="confirm" string="Confirm" states="draft" class="oe_highlight" type="object"/>
+                        <button name="action_cancel" string="Cancel Reservation" states="draft,confirm" class="oe_highlight" type="object"/>
+                        <button name="draft" string="Set to Draft" states="cancel" class="oe_highlight" type="object"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
-                        <field name="partner_id" readonly="1"/>
-                        <field name="folio_id" readonly="1"/>
+                        <group colspan="4" col="4">
+                            <group>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="folio_id" readonly="1"/>
+                            </group>
+                        </group>
                         <group>
                             <group colspan="4" col="4">
                                 <group>
                                     <field name="virtual_room_id"/>
                                     <field name="room_type_id"/>
+                                    <field name="product_id"
+                                        select="1" domain="[('isroom','=',True)]"
+                                        string="Room No" />
                                 </group>
                                 <group>
                                     <field name="product_uom_qty"
                                         invisible="1" />
-                                    <field name="invoice_status" />
-                                    <field name="product_id"
-                                        select="1" domain="[('isroom','=',True)]"
-                                        string="Room No" />
+                                    <field name="invoice_status" invisble="1"/>
+
                                     <field name="product_uom" string="Rent(UOM)" invisible="1" />
                                 </group>
                             </group>
@@ -73,6 +78,10 @@
                             </notebook>
                         </group>
                     </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
                 </form>
             </field>
         </record>
@@ -84,12 +93,14 @@
             <field name="arch" type="xml">
                 <tree string="Hotel Reservation" colors="red:state == 'cancelled';">
                     <field name="product_id"/>
+                    <field name="partner_id"/>
+                    <field name="folio_id"/>
                     <field name="checkin"/>
                     <field name="checkout"/>
                     <field name="adults"/>
                     <field name="children"/>
                     <field name="state" />
-                    <field name="to_assign" invisible="True" />
+                    <field name="to_assign" invisible="True"/>
                 </tree>
             </field>
         </record>

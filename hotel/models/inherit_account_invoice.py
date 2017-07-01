@@ -20,7 +20,8 @@
 #
 # ---------------------------------------------------------------------------
 from openerp import models, fields, api, _
-
+import logging
+_logger = logging.getLogger(__name__)
 
 
 class AccountInvoice(models.Model):
@@ -34,6 +35,24 @@ class AccountInvoice(models.Model):
         if context.get('invoice_origin', False):
             vals.update({'origin': context['invoice_origin']})
         return super(AccountInvoice, self).create(vals)
+
+    #~ @api.one
+    #~ @api.depends(
+        #~ 'amount_total',
+        #~ 'invoice_line_ids.price_subtotal',
+        #~ 'move_id.line_ids.amount_residual',
+        #~ 'move_id.line_ids.currency_id')
+    #~ def change_sale_amount(self):
+        #~ _logger.info("DEPENDDDSSSSS")
+        #~ for inv in self:
+            #~ folios = self.env['hotel.folio'].search([('id','in',sale_ids)])
+            #~ _logger.info("FOLIOS CAMBIADOS DESDE LA FACTURA:")
+            #~ _logger.info(folios)
+
+    sale_ids = fields.Many2many(
+            'sale.order', 'sale_order_invoice_rel', 'invoice_id',
+            'order_id', 'Sale Orders', readonly=True,
+            help="This is the list of sale orders related to this invoice.")
 
 
     #~ @api.multi

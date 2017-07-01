@@ -185,13 +185,15 @@ class HotelFolio(models.Model):
     room_lines = fields.One2many('hotel.reservation', 'folio_id',
                                  readonly=False,
                                  states={'done': [('readonly', True)]},
-                                 help="Hotel room reservation detail.")
+                                 help="Hotel room reservation detail.",
+                                 track_visibility='always')
     service_lines = fields.One2many('hotel.service.line', 'folio_id',
                                     readonly=False,
                                     states={'done': [('readonly', True)]},
                                     help="Hotel services detail provide to"
                                     "customer and it will include in "
-                                    "main Invoice.")
+                                    "main Invoice.",
+                                    track_visibility='always')
     hotel_policy = fields.Selection([('prepaid', 'On Booking'),
                                      ('manual', 'On Check In'),
                                      ('picking', 'On Checkout')],
@@ -250,26 +252,30 @@ class HotelFolio(models.Model):
         #~ self.env['hotel.folio'].search([('id','in',folios_in_ids)]).write({'checkins_reservations':True})
         #~ self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
 
-    @api.depends('invoice_ids.residual','invoice_ids.amount_total')
+    #~ @api.depends('invoice_ids.residual','invoice_ids.amount_total')
+    @api.model
     def compute_invoices_amount(self):
-        for fol in self:
-            inv_pending = 0
-            total_inv = 0
-            total_folio = fol.amount_total
-            for inv in fol.invoice_ids:
-                if inv.type != 'out_refund':
-                    if inv.state == 'draft':
-                        total_inv += inv.amount_total
-                        inv_pending += inv.amount_total
-                    else:
-                        total_inv += inv.amount_total
-                        inv_pending += inv.residual
-            if total_inv < total_folio:
-                inv_pending = total_folio - total_inv
-            fol.invoices_amount = inv_pending
-            fol.invoices_paid = total_folio - inv_pending
-            _logger.info("ONCHANGEEEE FULLLL")
-            _logger.info(fol.invoices_amount)
+        ensure_one()
+        inv_pending = 0
+        total_inv = 0
+        total_folio = fol.amount_total
+        for inv in self.invoice_ids:
+            if inv.type != 'out_refund':
+                if inv.state == 'draft':
+                    total_inv += inv.amount_total
+                    inv_pending += inv.amount_total
+                else:
+                    total_inv += inv.amount_total
+                    inv_pending += inv.residual
+        if total_inv < total_folio:
+            inv_pending = total_folio - total_inv
+        _logger.info(fol)
+        paid = total_folio - inv_pending
+        self.write({'invoices_amount': inv_pending})
+        self.write({'invoices_paid': paid})
+        _logger.info("ONCHANGEEEE FULLLL")
+        _logger.info(fol.name)
+        _logger.info(fol.invoices_amount)
 
     @api.multi
     def _compute_invoices_refund(self):
@@ -391,14 +397,16 @@ class HotelFolio(models.Model):
     def _compute_cardex_count(self):
         num_cardex = 0
         for reser in self.room_lines:
-            num_cardex += len(reser.cardex_ids)
+            if reser.state != 'cancelled':
+                num_cardex += len(reser.cardex_ids)
         self.cardex_count = num_cardex
 
     @api.multi
     def _compute_cardex_pending(self):
         pending = 0
         for reser in self.room_lines:
-            pending += reser.adults + reser.children - len(reser.cardex_ids)
+            if reser.state != 'cancelled':
+                pending += reser.adults + reser.children - len(reser.cardex_ids)
         if pending <= 0:
             self.cardex_pending = False
         else:

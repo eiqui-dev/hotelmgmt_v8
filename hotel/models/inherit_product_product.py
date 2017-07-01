@@ -29,3 +29,4 @@ class ProductProduct(models.Model):
     iscategid = fields.Boolean('Is categ id')
     isservice = fields.Boolean('Is Service id')
 
+

@@ -186,7 +186,7 @@ class HotelReservation(models.Model):
 
     _name = 'hotel.reservation'
     _description = 'hotel folio1 room line'
-
+    _inherit = ['ir.needaction_mixin','mail.thread']
 
     @api.depends('state', 'reservation_type')
     def _compute_color(self):
@@ -222,16 +222,19 @@ class HotelReservation(models.Model):
     reservation_no = fields.Char('Reservation No', size=64, readonly=True)
     adults = fields.Integer('Adults', size=64, readonly=True,
                             states={'draft': [('readonly', False)]},
+                            track_visibility='always',
                             help='List of adults there in guest list. ')
     children = fields.Integer('Children', size=64, readonly=True,
                               states={'draft': [('readonly', False)]},
+                              track_visibility='always',
                               help='Number of children there in guest list.')
     to_assign = fields.Boolean('To Assign')
     state = fields.Selection([('draft', 'Draft'), ('confirm', 'Confirm'),
                               ('booking', 'Booking'), ('done', 'Done'),
                               ('cancelled', 'Cancelled')],
                              'State', readonly=True,
-                             default=lambda *a: 'draft')
+                             default=lambda *a: 'draft',
+                             track_visibility='always')
     reservation_type = fields.Selection([
                                 ('normal', 'Normal'),
                                 ('staff', 'Staff'),
@@ -245,9 +248,11 @@ class HotelReservation(models.Model):
     folio_id = fields.Many2one('hotel.folio', string='Folio',
                                ondelete='cascade')
     checkin = fields.Datetime('Check In', required=True,
-                                   default=_get_checkin)
+                                   default=_get_checkin,
+                                   track_visibility='always')
     checkout = fields.Datetime('Check Out', required=True,
-                                    default=_get_checkout)
+                                    default=_get_checkout,
+                                    track_visibility='always')
     room_type_id = fields.Many2one('hotel.room.type',string='Room Type')
     virtual_room_id = fields.Many2one('hotel.virtual.room',string='Channel Room Type')
     partner_id = fields.Many2one (related='folio_id.partner_id')
@@ -281,7 +286,12 @@ class HotelReservation(models.Model):
     @api.multi
     def action_cancel(self):
         for record in self:
-            record.state = 'cancelled'
+            record.write({'state': 'confirm','to_assign':False})
+
+    @api.multi
+    def draft(self):
+        for record in self:
+            record.write({'state': 'draft','to_assign':False})
 
     @api.multi
     def action_reservation_checkout(self):
@@ -493,22 +503,24 @@ class HotelReservation(models.Model):
 
 
     @api.multi
-    def button_confirm(self):
+    def confirm(self):
         '''
         @param self: object pointer
         '''
-        for folio in self:
-            line = folio.order_line_id
-            line.button_confirm()
+        for r in self:
+            r.write({'state': 'confirm','to_assign':False})
+            #~ line = r.order_line_id
+            #~ line.button_confirm()
         return True
+
 
     @api.multi
     def button_done(self):
         '''
         @param self: object pointer
         '''
-        lines = [folio_line.order_line_id for folio_line in self]
-        lines.button_done()
+        #~ lines = [folio_line.order_line_id for folio_line in self]
+        #~ lines.button_done()
         self.write({'state': 'done'})
         for folio_line in self:
             workflow.trg_write(self._uid, 'sale.order',
