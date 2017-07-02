@@ -21,8 +21,8 @@
 # ---------------------------------------------------------------------------
 from openerp import models, fields, api, _
 
-class HotelRoom(models.Model):
 
+class HotelRoom(models.Model):
     _name = 'hotel.room'
     _description = 'Hotel Room'
 
@@ -41,8 +41,16 @@ class HotelRoom(models.Model):
     shared_room = fields.Boolean('Shared Room')
     to_be_cleaned = fields.Boolean('To be Cleaned')
     virtual_rooms = fields.Many2many('hotel.virtual.room', string='Virtual Rooms')
+    sale_price_type = fields.Selection([
+        ('fixed', 'Fixed Price'),
+        ('vroom', 'Virtual Room'),
+    ], 'Price Type', default='fixed', required=True)
+    price_virtual_room = fields.Many2one('hotel.virtual.room', 'Price Virtual Room',
+                                         help='Price will be based on selected Virtual Room')
 
-
-
-
-
+    def get_domain_price_virtual_room(self):
+        return {
+            'domain': {
+                'price_virtual_room': ['|', ('room_ids.id', '=', self.id), ('room_type_ids.id', '=', self.categ_id.id)]
+            }
+        }

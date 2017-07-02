@@ -184,6 +184,7 @@ class HotelReservation(models.Model):
 #        except Exception:
 #            return False
 
+
     @api.depends('state', 'reservation_type')
     def _compute_color(self):
         now_str = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
@@ -242,6 +243,10 @@ class HotelReservation(models.Model):
     _name = 'hotel.reservation'
     _description = 'hotel folio1 room line'
     _inherit = ['ir.needaction_mixin','mail.thread']
+
+    _defaults = {
+        'product_id': False
+    }
 
     reservation_no = fields.Char('Reservation No', size=64, readonly=True)
     adults = fields.Integer('Adults', size=64, readonly=True,
@@ -312,7 +317,11 @@ class HotelReservation(models.Model):
     @api.multi
     def action_cancel(self):
         for record in self:
-            record.write({'state': 'confirm','to_assign':False})
+            record.write({
+                'state': 'cancelled',
+                'to_assign': False,
+                'discount': 100.0,
+            })
 
     @api.multi
     def draft(self):
@@ -321,8 +330,8 @@ class HotelReservation(models.Model):
 
     @api.multi
     def action_reservation_checkout(self):
-        for r in self:
-            self.state = 'done'
+        for record in self:
+            record.state = 'done'
 
     @api.model
     def create(self, vals):
@@ -463,21 +472,23 @@ class HotelReservation(models.Model):
 
     @api.model
     def prepare_reservation_lines(self, datefrom, days):
-        tax_obj = self.env['account.tax']
         total_price = 0.0
         cmds = [(5, False, False)]
-        for i in range(0, days):
+
+        room = self.env['hotel.room'].search([('product_id', '=', self.product_id.id)])
+        product_id = room.sale_price_type == 'vroom' and room.price_virtual_room.product_id or self.product_id
+
+        for i in range(0, days + 1):
             ndate = datefrom + timedelta(days=i)
             ndate_str = ndate.strftime(DEFAULT_SERVER_DATE_FORMAT)
-            product_id = self.product_id.with_context(
-                lang=self.order_partner_id.lang,
-                partner=self.order_partner_id.id,
+            prod = product_id.with_context(
+                lang=self.partner_id.lang,
+                partner=self.partner_id.id,
                 quantity=1,
-                date_order=ndate_str,
-                pricelist=self.order_id.pricelist_id.id)
-            line_price = tax_obj._fix_tax_included_price(product_id.price,
-                                                         product_id.taxes_id,
-                                                         self.tax_id)
+                date=ndate_str,
+                pricelist=self.partner_id.property_product_pricelist.id,
+                uom=self.product_uom.id)
+            line_price = prod.price
             cmds.append((0, False, {
                 'date': ndate_str,
                 'price': line_price
@@ -488,8 +499,10 @@ class HotelReservation(models.Model):
             self.adults = room.capacity
         return {'total_price': total_price, 'commands': cmds}
 
+
     @api.multi
     @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id','check_rooms')
+
     def on_change_checkout(self):
         '''
         When you change checkin or checkout it will checked it
@@ -536,7 +549,6 @@ class HotelReservation(models.Model):
             domain_rooms.append(('id','in',room_ids))
         logging.info(domain_rooms)
         return {'domain': {'product_id': domain_rooms}}
-
 
     @api.multi
     def confirm(self):
