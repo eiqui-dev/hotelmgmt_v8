@@ -128,7 +128,7 @@
                                 <separator string="Room Lines" id="room_lines_separator" colspan="4" />
                                 <field name="room_lines" colspan="4" string="Room Line"
                                     nolabel="1" context="{'folio_id': id}">
-                                    <tree string="Room Line">
+                                    <tree string="Room Line" colors="red:state == 'cancelled'">
                                         <field name="product_id" string="Room No" />
                                         <field name="checkin" />
                                         <field name="checkout" />

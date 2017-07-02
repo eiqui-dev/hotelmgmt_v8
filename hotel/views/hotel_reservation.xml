@@ -26,7 +26,7 @@
                         <group>
                             <group colspan="4" col="4">
                                 <group>
-                                    <field name="virtual_room_id"/>
+                                    <field name="virtual_room_id" on_change="1" />
                                     <field name="room_type_id"/>
                                     <field name="product_id"
                                         select="1" domain="[('isroom','=',True)]"
@@ -35,7 +35,7 @@
                                 <group>
                                     <field name="product_uom_qty"
                                         invisible="1" />
-                                    <field name="invoice_status" invisble="1"/>
+                                    <field name="invoice_status" invisible="1"/>
 
                                     <field name="product_uom" string="Rent(UOM)" invisible="1" />
                                 </group>
