@@ -433,7 +433,6 @@ class HotelReservation(models.Model):
 
     @api.model
     def prepare_reservation_lines(self, datefrom, days):
-        tax_obj = self.env['account.tax']
         total_price = 0.0
         cmds = [(5, False, False)]
 
@@ -450,9 +449,7 @@ class HotelReservation(models.Model):
                 date_order=ndate_str,
                 pricelist=self.partner_id.property_product_pricelist.id,
                 uom=self.product_uom.id)
-            line_price = tax_obj._fix_tax_included_price(prod.price,
-                                                         prod.taxes_id,
-                                                         self.tax_id)
+            line_price = prod.price
             cmds.append((0, False, {
                 'date': ndate_str,
                 'price': line_price
