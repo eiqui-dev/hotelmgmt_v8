@@ -184,10 +184,6 @@ class HotelReservation(models.Model):
 #        except Exception:
 #            return False
 
-    _name = 'hotel.reservation'
-    _description = 'hotel folio1 room line'
-    _inherit = ['ir.needaction_mixin','mail.thread']
-
     @api.depends('state', 'reservation_type')
     def _compute_color(self):
         now_str = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
@@ -218,6 +214,34 @@ class HotelReservation(models.Model):
                 rec.reserve_color = COLOR_TYPES.get('stay')
             else:
                 rec.reserve_color = "#FFFFFF"
+
+    #~ @api.depends('checkin', 'checkout','room_type_id','virtual_room_id')
+    #~ def domain_rooms_ids(self):
+        #~ res_in = self.env['hotel.reservation'].search([
+            #~ ('checkin','>=',self.checkin),
+            #~ ('checkin','<=',self.checkout)])
+        #~ res_out = self.env['hotel.reservation'].search([
+            #~ ('checkout','>=',self.checkin),
+            #~ ('checkout','<=',self.checkout)])
+        #~ res_full = self.env['hotel.reservation'].search([
+            #~ ('checkin','<',self.checkin),
+            #~ ('checkout','>',self.checkout)])
+        #~ occupied = res_in | res_out | res_full
+        #~ occupied = occupied.filtered(lambda r: r.state != 'cancelled')
+        #~ rooms_occupied= occupied.mapped('product_id.id')
+        #~ free_rooms = self.env['hotel.room'].search([('id','not in',rooms_occupied)]
+        #~ if self.room_type_id:
+            #~ free_rooms = free_rooms.filtered(lambda r: r.categ_id.id = self.room_type_id.cat_id.id)
+        #~ if self.virtual_room_id:
+            #~ room_categories = self.virtual_room_id.room_type_ids.mapped('cat_id.id')
+            #~ link_virtual_rooms = self.virtual_room_id.room_ids | self.env['hotel.room'].search([('categ_id.id','in',room_categories)])
+            #~ free_rooms = free_rooms & link_virtual_rooms
+        #~ free_room_ids = free_rooms.mapped('product_id.id')
+        #~ record.write({'domain_room_ids': free_room_ids})
+
+    _name = 'hotel.reservation'
+    _description = 'hotel folio1 room line'
+    _inherit = ['ir.needaction_mixin','mail.thread']
 
     reservation_no = fields.Char('Reservation No', size=64, readonly=True)
     adults = fields.Integer('Adults', size=64, readonly=True,
@@ -267,6 +291,8 @@ class HotelReservation(models.Model):
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
     service_line_ids = fields.One2many('hotel.service.line','ser_room_line')
     pricelist_id = fields.Many2one('product.pricelist',related='folio_id.pricelist_id',readonly="1")
+    #~ domain_room_ids = fields.Char(compute='_domain_room_ids',default='_domain_rooms_ids')
+    check_rooms = fields.Boolean('Check Rooms')
 
     def _compute_cardex_count(self):
         for res in self:
@@ -315,6 +341,18 @@ class HotelReservation(models.Model):
             record.adults = room.capacity
         return record
 
+    @api.model
+    def write(self, vals):
+        """
+        Overrides orm write method.
+        @param self: The object pointer
+        @param vals: dictionary of fields value.
+        @return: new record set for hotel folio line.
+        """
+        res_write = super(HotelReservation, self).write(vals)
+        if self.check_rooms == False:
+            return
+        self.check_rooms = False
     #~ @api.multi
     #~ def unlink(self):
 #         """
@@ -450,7 +488,8 @@ class HotelReservation(models.Model):
             self.adults = room.capacity
         return {'total_price': total_price, 'commands': cmds}
 
-    @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id')
+    @api.multi
+    @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id','check_rooms')
     def on_change_checkout(self):
         '''
         When you change checkin or checkout it will checked it
@@ -458,6 +497,7 @@ class HotelReservation(models.Model):
         -----------------------------------------------------------------
         @param self: object pointer
         '''
+        self.ensure_one()
         if not self.checkin:
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
@@ -494,6 +534,7 @@ class HotelReservation(models.Model):
             link_virtual_rooms = self.virtual_room_id.room_ids | self.env['hotel.room'].search([('categ_id.id','in',room_categories)])
             room_ids = link_virtual_rooms.mapped('product_id.id')
             domain_rooms.append(('id','in',room_ids))
+        logging.info(domain_rooms)
         return {'domain': {'product_id': domain_rooms}}
 
 
