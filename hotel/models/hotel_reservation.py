@@ -440,9 +440,6 @@ class HotelReservation(models.Model):
         room = self.env['hotel.room'].search([('product_id', '=', self.product_id.id)])
         product_id = room.sale_price_type == 'vroom' and room.price_virtual_room.product_id or self.product_id
 
-        _logger.info(self.partner_id.property_product_pricelist.id)
-        _logger.info(self.product_uom.id)
-
         for i in range(0, days + 1):
             ndate = datefrom + timedelta(days=i)
             ndate_str = ndate.strftime(DEFAULT_SERVER_DATE_FORMAT)
