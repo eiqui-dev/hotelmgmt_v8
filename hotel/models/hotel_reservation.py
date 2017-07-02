@@ -440,6 +440,9 @@ class HotelReservation(models.Model):
         room = self.env['hotel.room'].search([('product_id', '=', self.product_id.id)])
         product_id = room.sale_price_type == 'vroom' and room.price_virtual_room.product_id or self.product_id
 
+        _logger.info(self.partner_id.property_product_pricelist.id)
+        _logger.info(self.product_uom.id)
+
         for i in range(0, days + 1):
             ndate = datefrom + timedelta(days=i)
             ndate_str = ndate.strftime(DEFAULT_SERVER_DATE_FORMAT)
@@ -448,7 +451,8 @@ class HotelReservation(models.Model):
                 partner=self.partner_id.id,
                 quantity=1,
                 date_order=ndate_str,
-                pricelist=self.partner_id.property_product_pricelist.id)
+                pricelist=self.partner_id.property_product_pricelist.id,
+                uom=self.product_uom.id)
             line_price = tax_obj._fix_tax_included_price(prod.price,
                                                          prod.taxes_id,
                                                          self.tax_id)

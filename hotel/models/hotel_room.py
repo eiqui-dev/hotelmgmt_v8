@@ -47,3 +47,10 @@ class HotelRoom(models.Model):
     ], 'Price Type', default='fixed', required=True)
     price_virtual_room = fields.Many2one('hotel.virtual.room', 'Price Virtual Room',
                                          help='Price will be based on selected Virtual Room')
+
+    def get_domain_price_virtual_room(self):
+        return {
+            'domain': {
+                'price_virtual_room': ['|', ('room_ids.id', '=', self.id), ('room_type_ids.id', '=', self.categ_id.id)]
+            }
+        }
