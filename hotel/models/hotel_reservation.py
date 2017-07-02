@@ -446,7 +446,7 @@ class HotelReservation(models.Model):
                 lang=self.partner_id.lang,
                 partner=self.partner_id.id,
                 quantity=1,
-                date_order=ndate_str,
+                date=ndate_str,
                 pricelist=self.partner_id.property_product_pricelist.id,
                 uom=self.product_uom.id)
             line_price = prod.price
