@@ -19,12 +19,21 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 # ---------------------------------------------------------------------------
+import json
 from openerp import models, fields, api, _
 
 
 class HotelRoom(models.Model):
     _name = 'hotel.room'
     _description = 'Hotel Room'
+
+#     @api.multi
+#     @api.depends('categ_id')
+#     def _compute_price_virtual_room_domain(self):
+#         for rec in self:
+#             rec.price_virtual_room_domain = json.dumps(
+#                 ['|', ('room_ids.id', '=', rec.id), ('room_type_ids.cat_id.id', '=', rec.categ_id.id)]
+#             )
 
     product_id = fields.Many2one('product.product', 'Product_id',
                                  required=True, delegate=True,
@@ -47,10 +56,16 @@ class HotelRoom(models.Model):
     ], 'Price Type', default='fixed', required=True)
     price_virtual_room = fields.Many2one('hotel.virtual.room', 'Price Virtual Room',
                                          help='Price will be based on selected Virtual Room')
+#     price_virtual_room_domain = fields.Char(
+#         compute=_compute_price_virtual_room_domain,
+#         readonly=True,
+#         store=False,
+#     )
 
-    def get_domain_price_virtual_room(self):
+    @api.onchange('categ_id')
+    def price_virtual_room_domain(self):
         return {
             'domain': {
-                'price_virtual_room': ['|', ('room_ids.id', '=', self.id), ('room_type_ids.id', '=', self.categ_id.id)]
+                'price_virtual_room': ['|', ('room_ids.id', '=', self.env.context.get('active_id')), ('room_type_ids.cat_id.id', '=', self.categ_id.id)]
             }
         }
