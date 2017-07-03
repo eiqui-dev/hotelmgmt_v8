@@ -32,7 +32,7 @@
         <t t-foreach='o.reservation_id' t-as='reservation'>
             <t t-set="company" t-value="res_company"></t>
 
-            <div class="page">
+            <div class="page" style="font-size:xx-small;">
                 <div class="container-fluid">
                     <div class="row cabezera">
                         <div class="col-md-12 text-center">
@@ -139,7 +139,7 @@
                             <p class="text-center">
                                 <t t-esc="company.city"/>, <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%A, %d de %B de %Y')"/>
                             </p>
-                            <div class="firma" style="width: 85%; border:dotted 1px; height: 80px; margin:0 auto;">
+                            <div class="firma" style="width: 85%; border:dotted 1px; height: 60px; margin:0 auto;">
                             </div><br/>
                             <p class="text-center">Firma del viajero</p>
                             <p class="text-center" style="font-size:0.65em;"><t t-esc="company.cardex_warning"/></p>
@@ -150,7 +150,7 @@
             </div>
 
 
-            <div class="page">
+            <div class="page" style="font-size:xx-small;">
                 <div class="container-fluid">
                     <div class="row cabezera">
                         <div class="col-md-12 text-center">
