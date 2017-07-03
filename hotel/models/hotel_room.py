@@ -19,7 +19,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 # ---------------------------------------------------------------------------
-import json
+#import json
 from openerp import models, fields, api, _
 
 
@@ -66,6 +66,6 @@ class HotelRoom(models.Model):
     def price_virtual_room_domain(self):
         return {
             'domain': {
-                'price_virtual_room': ['|', ('room_ids.id', '=', self.env.context.get('active_id')), ('room_type_ids.cat_id.id', '=', self.categ_id.id)]
+                'price_virtual_room': ['|', ('room_ids.id', '=', self._origin.id), ('room_type_ids.cat_id.id', '=', self.categ_id.id)]
             }
         }
