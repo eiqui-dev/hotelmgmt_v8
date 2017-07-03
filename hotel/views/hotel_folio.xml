@@ -25,7 +25,7 @@
                         <button name="action_done" type="object" string="Set to Done"
                             states="sale" attrs="{'invisible': [('invoice_status', '!=', 'invoiced')]}"
                             help="If a Hotel Folio is done, you cannot modify it manually anymore. However, you will still be able to invoice or deliver. This is used to freeze the Hotel Folio." />
-                        <button name="action_pay" type="object" states="sale,done"
+                        <button name="action_pay" type="object" states="sale"
                             string="Pay" groups="account.group_account_invoice"
                             class="oe_highlight" attrs="{'invisible': [('invoices_amount', '&lt;=', 0)]}" />
                         <field name="state" select="2" widget="statusbar"
