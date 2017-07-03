@@ -332,6 +332,7 @@ class HotelReservation(models.Model):
     def action_reservation_checkout(self):
         for record in self:
             record.state = 'done'
+            record.to_assign = False
 
     @api.model
     def create(self, vals):
