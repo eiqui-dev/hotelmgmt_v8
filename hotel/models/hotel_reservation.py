@@ -351,18 +351,6 @@ class HotelReservation(models.Model):
             record.adults = room.capacity
         return record
 
-    @api.model
-    def write(self, vals):
-        """
-        Overrides orm write method.
-        @param self: The object pointer
-        @param vals: dictionary of fields value.
-        @return: new record set for hotel folio line.
-        """
-        res_write = super(HotelReservation, self).write(vals)
-        if self.check_rooms == False:
-            return
-        self.check_rooms = False
     #~ @api.multi
     #~ def unlink(self):
 #         """
