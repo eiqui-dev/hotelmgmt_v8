@@ -38,6 +38,7 @@ from . import inherit_product_product
 from . import inherit_res_company
 from . import virtual_room
 from . import inherit_account_payment
-from . import reservation_restrictions
+from . import reservation_restriction
+from . import reservation_restriction_item
 from . import hotel_reservation_line
 from . import cardex

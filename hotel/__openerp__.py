@@ -58,6 +58,7 @@
         'views/hotel_room_amenities_type.xml',
         'views/hotel_room_amenities.xml',
         'views/reservation_restriction_views.xml',
+        'views/reservation_restriction_item_views.xml',
         'views/hotel_reservation.xml',
         'views/virtual_room_views.xml',
         'views/cardex.xml',

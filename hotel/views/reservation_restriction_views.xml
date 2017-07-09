@@ -1,69 +1,61 @@
 <?xml version="1.0"?>
-<openerp>
-    <data>
+<odoo>
 
-    <!-- FORM restriction -->
-
-        <record id="reservation_restriction_view_form" model="ir.ui.view">
-            <field name="name">reservation.restriction.form</field>
-            <field name="model">reservation.restriction</field>
-            <field name="arch" type="xml">
-                <form string="Restrictions">
-                    <group string="Reservation Restrictions" colspan="4">
-                        <field name="name"/>
-                        <field name="room_ids"/>
-                        <field name="room_type_ids"/>
-                        <field name="init_date"/>
-                        <field name="end_date"/>
-                        <field name="min_stay"/>
-                        <group name="weekdays">
-                            <field name="mo"/>
-                            <field name="tu"/>
-                            <field name="we"/>
-                            <field name="th"/>
-                            <field name="fr"/>
-                            <field name="sa"/>
-                            <field name="su"/>
-                        </group>
-                        <field name="close"/>
-                        <field name="no_ota"/>
-                        <field name="min_stay_arrival"/>
-                        <field name="max_stay"/>
-                        <field name="no_checkout"/>
-                    </group>
-                </form>
+  <!-- FORM restriction -->
+  <record id="reservation_restriction_view_form" model="ir.ui.view">
+    <field name="name">reservation.restriction.form</field>
+    <field name="model">reservation.restriction</field>
+    <field name="arch" type="xml">
+      <form string="Restrictions">
+        <sheet>
+          <group>
+            <h1><field name="name"/></h1>
+          </group>
+          <group>
+            <field name="active"/>
+          </group>
+          <div>
+            <separator string="Pricelist Items"/>
+            <field name="item_ids" nolabel="1">
+              <tree string="Restriction Items">
+                <field name="applied_on"/>
+                <field name="virtual_room_id" attr="{'invisible':[['applied_on', '=', '1_virtual_room']]}"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="min_stay"/>
+                <field name="closed"/>
+              </tree>
             </field>
-        </record>
+          </div>
+        </sheet>
+      </form>
+    </field>
+  </record>
 
-    <!-- TREE restriction -->
-       <record id="reservation_restriction_view_tree" model="ir.ui.view">
-            <field name="name">reservation.restriction.tree</field>
-            <field name="model">reservation.restriction</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Restrictions">
-                    <field name="name"/>
-                    <field name="room_ids"/>
-                    <field name="room_type_ids"/>
-                    <field name="init_date"/>
-                    <field name="end_date"/>
-                    <field name="min_stay"/>
-                </tree>
-            </field>
-        </record>
+  <!-- TREE restriction -->
+  <record id="reservation_restriction_view_tree" model="ir.ui.view">
+    <field name="name">reservation.restriction.tree</field>
+    <field name="model">reservation.restriction</field>
+    <field name="type">tree</field>
+    <field name="arch" type="xml">
+      <tree string="Restrictions">
+        <field name="name"/>
+        <field name="active"/>
+      </tree>
+    </field>
+  </record>
 
-     <!-- Action of reservation restriction -->
-            <record model="ir.actions.act_window" id="reservation_restriction_action">
-                <field name="name">Reservation restrictions</field>
-                <field name="res_model">reservation.restriction</field>
-                <field name="view_type">form</field>
-                <field name="view_mode">tree,form</field>
-            </record>
+  <!-- Action of reservation restriction -->
+  <record model="ir.actions.act_window" id="reservation_restriction_action">
+    <field name="name">Reservation restrictions</field>
+    <field name="res_model">reservation.restriction</field>
+    <field name="view_type">form</field>
+    <field name="view_mode">tree,form</field>
+  </record>
 
-    <!-- MENUS -->
-         <menuitem name="Restrictions" id="reservation_restriction_menu"
-                action="reservation_restriction_action" sequence="22"
-                parent="hotel.hotel_configuration_menu"/>
+  <!-- MENUS -->
+  <menuitem name="Restrictions" id="reservation_restriction_menu"
+    action="reservation_restriction_action" sequence="22"
+    parent="hotel.hotel_configuration_menu"/>
 
-    </data>
- </openerp>
+ </odoo>
