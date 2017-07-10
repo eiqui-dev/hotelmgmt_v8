@@ -218,6 +218,7 @@ class HotelFolio(models.Model):
     checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins')
     checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts')
     partner_internal_comment = fields.Text(string='Internal Partner Notes',related='partner_id.comment')
+    cancelled_reason = fields.Text('Cause of cancelled')
 
     @api.multi
     def _compute_checkins(self):

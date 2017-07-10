@@ -103,19 +103,19 @@ class HotelServiceLine(models.Model):
             vals.update({'order_id': room_line.folio_id.order_id.id,'folio_id': room_line.folio_id.id})
         return super(HotelServiceLine, self).create(vals)
 
-    @api.multi
-    def unlink(self):
-        """
-        Overrides orm unlink method.
-        @param self: The object pointer
-        @return: True/False.
-        """
-        s_line_obj = self.env['sale.order.line']
-        for line in self:
-            if line.service_line_id:
-                sale_unlink_obj = s_line_obj.browse([line.service_line_id.id])
-                sale_unlink_obj.unlink()
-        return super(HotelServiceLine, self).unlink()
+    #~ @api.multi
+    #~ def unlink(self):
+        #~ """
+        #~ Overrides orm unlink method.
+        #~ @param self: The object pointer
+        #~ @return: True/False.
+        #~ """
+        #~ s_line_obj = self.env['sale.order.line']
+        #~ for line in self:
+            #~ if line.service_line_id:
+                #~ sale_unlink_obj = s_line_obj.browse([line.service_line_id.id])
+                #~ sale_unlink_obj.unlink()
+        #~ return super(HotelServiceLine, self).unlink()
 
     @api.onchange('product_id')
     def product_id_change(self):

@@ -269,6 +269,7 @@ class HotelReservation(models.Model):
                                 ('staff', 'Staff'),
                                 ('out', 'Out of Service')
                                 ], 'Reservation Type', default=lambda *a: 'normal')
+    cancelled_reason = fields.Text('Cause of cancelled')
     out_service_description = fields.Text('Cause of out of service')
     reserve_color = fields.Char(compute='_compute_color',string='Color', store=True)
     order_line_id = fields.Many2one('sale.order.line', string='Order Line',
@@ -491,7 +492,6 @@ class HotelReservation(models.Model):
 
     @api.multi
     @api.onchange('checkin', 'checkout','room_type_id','virtual_room_id','check_rooms')
-
     def on_change_checkout(self):
         '''
         When you change checkin or checkout it will checked it
