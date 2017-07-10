@@ -42,3 +42,4 @@ from . import reservation_restriction
 from . import reservation_restriction_item
 from . import hotel_reservation_line
 from . import cardex
+from . import virtual_room_availability
