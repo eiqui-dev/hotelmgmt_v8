@@ -18,7 +18,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields
+from openerp import models, fields, api
+from openerp.exceptions import ValidationError
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT
+from datetime import datetime
 
 
 class ReservationRestrictionItem(models.Model):
@@ -39,3 +42,29 @@ class ReservationRestrictionItem(models.Model):
     closed = fields.Boolean('Closed')
     closed_departure = fields.Boolean('Closed Departure')
     closed_arrival = fields.Boolean('Closed Arrival')
+
+    @api.constrains('min_stay', 'min_stay_arrival', 'max_stay')
+    def _check_min_stay_min_stay_arrival_max_stay(self):
+        if self.min_stay < 0:
+            raise ValidationError("Min. Stay can't be less than zero")
+        elif self.min_stay_arrival < 0:
+            raise ValidationError("Min. Stay Arrival can't be less than zero")
+        elif self.max_stay < 0:
+            raise ValidationError("Max. Stay can't be less than zero")
+
+    @api.constrains('date_start', 'date_end')
+    def _check_date_start_date_end(self):
+        if self.applied_on == '1_global':
+            self.date_start = False
+            self.date_end = False
+        elif self.date_start and self.date_end:
+            date_start_dt = datetime.strptime(self.date_start, DEFAULT_SERVER_DATE_FORMAT)
+            date_end_dt = datetime.strptime(self.date_end, DEFAULT_SERVER_DATE_FORMAT)
+            if date_end_dt < date_start_dt:
+                raise ValidationError("Invalid Dates")
+
+    @api.constrains('applied_on')
+    def _check_applied_on(self):
+        count = self.search_count([('applied_on', '=', '1_global')])
+        if count > 1:
+            raise ValidationError("Already exists an global rule")
