@@ -75,39 +75,29 @@ class VirtualRoom(models.Model):
         ondelete='cascade')
 
     @api.model
-    def check_availability_virtual_room(self,checkin, checkout, virtual_room_id = False):
+    def check_availability_virtual_room(self, checkin, checkout, virtual_room_id=False, notthis=[]):
         res = self.env['hotel.reservation'].search([
-            ('checkout','>=',checkin),
-            ('checkin','<=',checkout)
+            ('checkout', '>=', checkin),
+            ('checkin', '<=', checkout)
             ])
         res_in = res.search([
-            ('checkin','>=',checkin),
-            ('checkin','<=',checkout)])
+            ('checkin', '>=', checkin),
+            ('checkin','<=', checkout)])
         res_out = res.search([
-            ('checkout','>=',checkin),
-            ('checkout','<=',checkout)])
+            ('checkout', '>=', checkin),
+            ('checkout', '<=', checkout)])
         res_full = res.search([
-            ('checkin','<',checkin),
-            ('checkout','>',checkout)])
+            ('checkin', '<', checkin),
+            ('checkout', '>', checkout)])
         occupied = res_in | res_out | res_full
         occupied &= res
         occupied = occupied.filtered(lambda r: r.state != 'cancelled')
         rooms_occupied = occupied.mapped('product_id.id')
-        free_rooms = self.env['hotel.room'].search([('product_id.id','not in',rooms_occupied)])
+        free_rooms = self.env['hotel.room'].search([('product_id.id', 'not in', rooms_occupied),
+                                                    ('id', 'not in', notthis)])
         if virtual_room_id:
-            virtual_room = self.env['hotel.virtual.room'].search([('id','=',virtual_room_id)])
+            virtual_room = self.env['hotel.virtual.room'].search([('id', '=', virtual_room_id)])
             room_categories = virtual_room.room_type_ids.mapped('cat_id.id')
-            rooms_linked = virtual_room.room_ids | self.env['hotel.room'].search([('categ_id.id','in',room_categories)])
+            rooms_linked = virtual_room.room_ids | self.env['hotel.room'].search([('categ_id.id', 'in', room_categories)])
             free_rooms = free_rooms & rooms_linked
         return free_rooms
-
-
-
-
-
-
-
-
-
-
-
