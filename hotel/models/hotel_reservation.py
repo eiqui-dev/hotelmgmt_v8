@@ -504,27 +504,23 @@ class HotelReservation(models.Model):
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
             self.checkout = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
-        checkin = self.checkin
-        checkout = self.checkout
-        if checkin and checkout:
-            server_dt = DEFAULT_SERVER_DATETIME_FORMAT
-            chkin_dt = datetime.strptime(checkin, server_dt)
-            chkout_dt = datetime.strptime(checkout, server_dt)
-            dur = chkout_dt - chkin_dt
-            sec_dur = dur.seconds
-            if (not dur.days and not sec_dur) or (dur.days and not sec_dur):
-                myduration = dur.days
-            else:
-                myduration = dur.days + 1
+        checkin_end_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
+        checkin_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
+        checkout_end_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
+        checkout_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
+        #if self.folio_id.date_order and self.checkin:
+            #if self.checkin <= self.folio_id.date_order:
+                #raise ValidationError(_('Room line check in date should be \
+                #greater than the current date.'))
         res_in = self.env['hotel.reservation'].search([
-            ('checkin','>=',self.checkin),
-            ('checkin','<=',self.checkout)])
+            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         res_out = self.env['hotel.reservation'].search([
-            ('checkout','>=',self.checkin),
-            ('checkout','<=',self.checkout)])
+            ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         res_full = self.env['hotel.reservation'].search([
-            ('checkin','<',self.checkin),
-            ('checkout','>',self.checkout)])
+            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         occupied = res_in | res_out | res_full
         occupied = occupied.filtered(lambda r: r.state != 'cancelled')
         rooms_occupied= occupied.mapped('product_id.id')
@@ -585,19 +581,23 @@ class HotelReservation(models.Model):
         if self.checkin >= self.checkout:
                 raise ValidationError(_('Room line Check In Date Should be \
                 less than the Check Out Date!'))
+        checkin_end_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
+        checkin_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
+        checkout_end_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
+        checkout_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
         #if self.folio_id.date_order and self.checkin:
             #if self.checkin <= self.folio_id.date_order:
                 #raise ValidationError(_('Room line check in date should be \
                 #greater than the current date.'))
         res_in = self.env['hotel.reservation'].search([
-            ('checkin','>=',self.checkin),
-            ('checkin','<=',self.checkout)])
+            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         res_out = self.env['hotel.reservation'].search([
-            ('checkout','>=',self.checkin),
-            ('checkout','<=',self.checkout)])
+            ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         res_full = self.env['hotel.reservation'].search([
-            ('checkin','<',self.checkin),
-            ('checkout','>',self.checkout)])
+            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         occupied = res_in | res_out | res_full
         occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id and r.id != self.id and r.state != 'cancelled')
         occupied_name = ','.join(str(x.name) for x in occupied)
