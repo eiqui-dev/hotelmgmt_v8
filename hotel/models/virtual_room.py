@@ -24,7 +24,7 @@ from openerp.tools import misc, DEFAULT_SERVER_DATETIME_FORMAT
 from openerp import models, fields, api, _
 from openerp import workflow
 from decimal import Decimal
-import datetime
+from datetime import datetime, timedelta
 import urllib2
 import time
 
@@ -76,21 +76,24 @@ class VirtualRoom(models.Model):
 
     @api.model
     def check_availability_virtual_room(self, checkin, checkout, virtual_room_id=False, notthis=[]):
-        res = self.env['hotel.reservation'].search([
-            ('checkout', '>=', checkin),
-            ('checkin', '<=', checkout)
-            ])
-        res_in = res.search([
-            ('checkin', '>=', checkin),
-            ('checkin','<=', checkout)])
-        res_out = res.search([
-            ('checkout', '>=', checkin),
-            ('checkout', '<=', checkout)])
-        res_full = res.search([
-            ('checkin', '<', checkin),
-            ('checkout', '>', checkout)])
+        checkin_end_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
+        checkin_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
+        checkout_end_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
+        checkout_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
+        #if self.folio_id.date_order and self.checkin:
+            #if self.checkin <= self.folio_id.date_order:
+                #raise ValidationError(_('Room line check in date should be \
+                #greater than the current date.'))
+        res_in = self.env['hotel.reservation'].search([
+            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
+        res_out = self.env['hotel.reservation'].search([
+            ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
+        res_full = self.env['hotel.reservation'].search([
+            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         occupied = res_in | res_out | res_full
-        occupied &= res
         occupied = occupied.filtered(lambda r: r.state != 'cancelled')
         rooms_occupied = occupied.mapped('product_id.id')
         free_rooms = self.env['hotel.room'].search([('product_id.id', 'not in', rooms_occupied),
