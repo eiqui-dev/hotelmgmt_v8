@@ -76,10 +76,10 @@ class VirtualRoom(models.Model):
 
     @api.model
     def check_availability_virtual_room(self, checkin, checkout, virtual_room_id=False, notthis=[]):
-        checkin_end_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
-        checkin_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
-        checkout_end_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
-        checkout_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
+        checkin_end_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
+        checkin_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATETIME_FORMAT)
+        checkout_end_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
+        checkout_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATETIME_FORMAT)
         #if self.folio_id.date_order and self.checkin:
             #if self.checkin <= self.folio_id.date_order:
                 #raise ValidationError(_('Room line check in date should be \
