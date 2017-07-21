@@ -20,7 +20,7 @@
 #
 # ---------------------------------------------------------------------------
 from openerp.exceptions import except_orm, UserError, ValidationError
-from openerp.tools import misc, DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.tools import misc, DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 from openerp import models, fields, api, _
 from openerp import workflow
 from decimal import Decimal
