@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-	
 # --------------------------------------------------------------------------
 #
 #    OpenERP, Open Source Management Solution
@@ -25,6 +25,7 @@ from openerp import models, fields, api, _
 from openerp import workflow
 from decimal import Decimal
 from datetime import datetime, timedelta
+import dateutil.parser
 import urllib2
 import time
 
@@ -76,10 +77,10 @@ class VirtualRoom(models.Model):
 
     @api.model
     def check_availability_virtual_room(self, checkin, checkout, virtual_room_id=False, notthis=[]):
-        checkin_end_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATE_FORMAT) + timedelta(days=1)
-        checkin_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATE_FORMAT)
-        checkout_end_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATE_FORMAT) + timedelta(days=-1)
-        checkout_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATE_FORMAT)
+	checkin_dt = dateutil.parser.parse(checkin).date()
+	checkout_dt = dateutil.parser.parse(checkout).date()
+        checkin_end_dt = checkin_dt + timedelta(days=1)
+        checkout_end_dt = checkout_dt + timedelta(days=-1)
         #if self.folio_id.date_order and self.checkin:
             #if self.checkin <= self.folio_id.date_order:
                 #raise ValidationError(_('Room line check in date should be \
