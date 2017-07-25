@@ -86,7 +86,7 @@ class VirtualRoom(models.Model):
                 #raise ValidationError(_('Room line check in date should be \
                 #greater than the current date.'))
         res_in = self.env['hotel.reservation'].search([
-            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkin','>=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
             ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         res_out = self.env['hotel.reservation'].search([
             ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
