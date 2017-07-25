@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-	
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------
 #
 #    OpenERP, Open Source Management Solution
@@ -77,8 +77,8 @@ class VirtualRoom(models.Model):
 
     @api.model
     def check_availability_virtual_room(self, checkin, checkout, virtual_room_id=False, notthis=[]):
-	checkin_dt = dateutil.parser.parse(checkin).date()
-	checkout_dt = dateutil.parser.parse(checkout).date()
+        checkin_dt = dateutil.parser.parse(checkin).date()
+        checkout_dt = dateutil.parser.parse(checkout).date()
         checkin_end_dt = checkin_dt + timedelta(days=1)
         checkout_end_dt = checkout_dt + timedelta(days=-1)
         #if self.folio_id.date_order and self.checkin:
