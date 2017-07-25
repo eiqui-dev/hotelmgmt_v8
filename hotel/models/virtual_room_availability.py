@@ -23,13 +23,14 @@ from openerp.exceptions import ValidationError
 
 
 class VirtualRoomAvailability(models.Model):
+    _inherit = 'mail.thread'
     _name = 'virtual.room.availability'
 
-    virtual_room_id = fields.Many2one('hotel.virtual.room', 'Virtual Room', required=True)
-    avail = fields.Integer('Avail', default=0)
-    no_ota = fields.Boolean('No OTA', default=False)
-    booked = fields.Boolean('Booked', default=False, readonly=True)
-    date = fields.Date('Date', required=True)
+    virtual_room_id = fields.Many2one('hotel.virtual.room', 'Virtual Room', required=True, track_visibility='always')
+    avail = fields.Integer('Avail', default=0, track_visibility='always')
+    no_ota = fields.Boolean('No OTA', default=False, track_visibility='always')
+    booked = fields.Boolean('Booked', default=False, readonly=True, track_visibility='always')
+    date = fields.Date('Date', required=True, track_visibility='always')
 
     @api.constrains('avail')
     def _check_avail(self):
