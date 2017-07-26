@@ -63,6 +63,7 @@
         'views/virtual_room_views.xml',
         'views/cardex.xml',
         'views/virtual_room_availability.xml',
+        'data/cron_jobs.xml'
     ],
     'css': ['static/src/css/room_kanban.css'],
     'auto_install': False,

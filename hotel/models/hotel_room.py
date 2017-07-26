@@ -21,6 +21,9 @@
 # ---------------------------------------------------------------------------
 #import json
 from openerp import models, fields, api, _
+from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
+from openerp.tools import misc, DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 
 
 class HotelRoom(models.Model):
@@ -69,3 +72,22 @@ class HotelRoom(models.Model):
                 'price_virtual_room': ['|', ('room_ids.id', '=', self._origin.id), ('room_type_ids.cat_id.id', '=', self.categ_id.id)]
             }
         }
+
+    @api.model
+    def rooms_occupied(self, checkin, checkout):
+        checkin_end_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
+        checkin_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATETIME_FORMAT)
+        checkout_end_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
+        checkout_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATETIME_FORMAT)
+        res_in = self.env['hotel.reservation'].search([
+            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
+        res_out = self.env['hotel.reservation'].search([
+            ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
+        res_full = self.env['hotel.reservation'].search([
+            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
+        occupied = res_in | res_out | res_full
+        occupied = occupied.filtered(lambda r: r.state != 'cancelled')
+        return occupied

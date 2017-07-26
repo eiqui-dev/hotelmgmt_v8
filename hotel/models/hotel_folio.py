@@ -215,43 +215,24 @@ class HotelFolio(models.Model):
     cardex_count = fields.Integer('Cardex counter', compute='_compute_cardex_count')
     cardex_pending = fields.Boolean('Cardex Pending', compute='_compute_cardex_pending')
     cardex_pending_num = fields.Integer('Cardex Pending', compute='_compute_cardex_pending')
-    checkins_reservations = fields.Boolean('checkins reservations',compute='_compute_checkins')
-    checkouts_reservations = fields.Boolean('checkouts reservations',compute='_compute_checkouts')
+    checkins_reservations = fields.Integer('checkins reservations')
+    checkouts_reservations = fields.Integer('checkouts reservations')
     partner_internal_comment = fields.Text(string='Internal Partner Notes',related='partner_id.comment')
     cancelled_reason = fields.Text('Cause of cancelled')
 
-    @api.multi
-    def _compute_checkins(self):
-        for fol in self:
-            for line in fol.room_lines:
-                checkin_dt = datetime.datetime.strptime(line.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
-                checkin_str = checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                if checkin_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
-                    fol.checkins_reservations = True
-                    return True
 
-    @api.multi
-    def _compute_checkouts(self):
-        for fol in self:
-            for line in fol.room_lines:
-                checkout_dt = datetime.datetime.strptime(line.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
-                checkout_str = checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                if checkout_str == datetime.datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT):
-                    fol.checkouts_reservations = True
-
-    #~ @api.model
-    #~ def checks_today(self):
-        #~ self.env['hotel.folio'].search([]).write({'checkins_reservations':False,'checkout_reservations':False})
-        #~ today_start = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
-        #~ today_end = datetime.datetime.now().replace(hour=00, minute=00, second=00).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
-        #~ reservations = self.env[('hotel.reservation')].search([
-            #~ ('checkout','>=',today_start),
-            #~ ('checkin','<=',today_end)
-            #~ ])
-        #~ folios_out_ids = reservations.filtered(lambda r: r.checkout >= today_start).mapped('folio_id.id')
-        #~ folios_in_ids = reservations.filtered(lambda r: r.checkin <= today_end).mapped('folio_id.id')
-        #~ self.env['hotel.folio'].search([('id','in',folios_in_ids)]).write({'checkins_reservations':True})
-        #~ self.env['hotel.folio'].search([('id','in',folios_out_ids)]).write({'checkout_reservations':True})
+    @api.model
+    def daily_plan(self):
+        self._cr.execute("update hotel_folio set checkins_reservations = 0, checkouts_reservations = 0 where checkins_reservations >0  or checkouts_reservations > 0")
+        folios_in = self.env['hotel.folio'].search([('room_lines.is_checkin','=',True)])
+        folios_out = self.env['hotel.folio'].search([('room_lines.is_checkout','=',True)])
+        for fol in folios_in:
+            count_checkin = fol.room_lines.search_count([('is_checkin','=',True),('folio_id.id','=',fol.id)])
+            fol.write({'checkins_reservations': count_checkin})
+        for fol in folios_out:
+            count_checkout = fol.room_lines.search_count([('is_checkout','=',True),('folio_id.id','=',fol.id)])
+            fol.write({'checkouts_reservations': count_checkout})
+        return True
 
     @api.depends('amount_total','room_lines','service_lines')
     @api.multi
@@ -332,52 +313,6 @@ class HotelFolio(models.Model):
         'res_model': 'cardex',
         'type': 'ir.actions.act_window',
         'domain': [('reservation_id','in', rooms)]
-        }
-
-    @api.multi
-    def action_folios_in(self):
-        checkin_dt = datetime.datetime.now().replace(hour=00, minute=00, second=00)
-        checkout_dt = datetime.datetime.now().replace(hour=23, minute=59, second=59)
-        local = pytz.timezone(self.env.context.get('tz','UTC'))
-        local_dt_in = local.localize(checkin_dt, is_dst=False)
-        utc_dt_in = local_dt_in.astimezone(pytz.utc)
-        local_dt_out = local.localize(checkout_dt, is_dst=False)
-        utc_dt_out = local_dt_out.astimezone(pytz.utc)
-        reservations = self.env['hotel.reservation'].search([
-                    ('checkin','>=',utc_dt_in.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('checkin','<=',utc_dt_out.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('state','not in',['booking','cancelled'])])
-        folios = reservations.mapped('folio_id.id')
-        return {
-            'name': _('Checkins'),
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'res_model': 'hotel.folio',
-            'type': 'ir.actions.act_window',
-            'domain': [('id','in', folios)]
-        }
-
-    @api.multi
-    def action_folios_out(self):
-        checkin_dt = datetime.datetime.now().replace(hour=00, minute=00, second=00)
-        checkout_dt = datetime.datetime.now().replace(hour=23, minute=59, second=59)
-        local = pytz.timezone(self.env.context.get('tz','UTC'))
-        local_dt_in = local.localize(checkin_dt, is_dst=False)
-        utc_dt_in = local_dt_in.astimezone(pytz.utc)
-        local_dt_out = local.localize(checkin_dt, is_dst=False)
-        utc_dt_out = local_dt_out.astimezone(pytz.utc)
-        reservations = self.env['hotel.reservation'].search([
-                    ('checkout','>=',utc_dt_in.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('checkout','<=',utc_dt_out.strftime(DEFAULT_SERVER_DATETIME_FORMAT)),
-                    ('state','=','booking')])
-        folios = reservations.mapped('folio_id.id')
-        return {
-            'name': _('Checkouts'),
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'res_model': 'hotel.folio',
-            'type': 'ir.actions.act_window',
-            'domain': [('id','in', folios)]
         }
 
     @api.multi
@@ -464,58 +399,6 @@ class HotelFolio(models.Model):
             if room.product_id.id in folio_rooms:
                 raise ValidationError(_('You Cannot Take Same Room Twice'))
             folio_rooms.append(room.product_id.id)
-
-#     @api.constrains('checkin', 'checkout')
-#     def check_dates(self):
-#         '''
-#         This method is used to validate the checkin and checkout.
-#         -------------------------------------------------------------------
-#         @param self: object pointer
-#         @return: raise warning depending on the validation
-#         '''
-#         if self.checkin >= self.checkout:
-#                 raise ValidationError(_('Check in Date Should be \
-#                 less than the Check Out Date!'))
-#         if self.date_order and self.checkin:
-#             if self.checkin < self.date_order:
-#                 raise ValidationError(_('Check in date should be \
-#                 greater than the current date.'))
-
-    #~ @api.onchange('checkout', 'checkin')
-    #~ def onchange_dates(self):
-        #~ '''
-        #~ This mathod gives the duration between check in and checkout
-        #~ if customer will leave only for some hour it would be considers
-        #~ as a whole day.If customer will check in checkout for more or equal
-        #~ hours, which configured in company as additional hours than it would
-        #~ be consider as full days
-        #~ --------------------------------------------------------------------
-        #~ @param self: object pointer
-        #~ @return: Duration and checkout
-        #~ '''
-        #~ company_obj = self.env['res.company']
-        #~ configured_addition_hours = 0
-        #~ company_ids = company_obj.search([])
-        #~ if company_ids.ids:
-            #~ configured_addition_hours = company_ids[0].additional_hours
-        #~ myduration = 0
-        #~ checkin = self.checkin
-        #~ checkout = self.checkout
-        #~ if checkin and checkout:
-            #~ server_dt = DEFAULT_SERVER_DATETIME_FORMAT
-            #~ chkin_dt = datetime.datetime.strptime(checkin, server_dt)
-            #~ chkout_dt = datetime.datetime.strptime(checkout, server_dt)
-            #~ dur = chkout_dt - chkin_dt
-            #~ sec_dur = dur.seconds
-            #~ if (not dur.days and not sec_dur) or (dur.days and not sec_dur):
-                #~ myduration = dur.days
-            #~ else:
-                #~ myduration = dur.days + 1
-            #~ if configured_addition_hours > 0:
-                #~ additional_hours = abs((dur.seconds / 60) / 60)
-                #~ if additional_hours >= configured_addition_hours:
-                    #~ myduration += 1
-        #~ self.duration = myduration
 
     @api.model
     def create(self, vals, check=True):
@@ -757,7 +640,7 @@ class HotelFolio(models.Model):
             order.state = 'sale'
             order.order_line._action_procurement_create()
             for room in self.room_lines:
-                room.write({'state': 'confirm','to_assign':False})
+                room.confirm()
             if not order.project_id:
                 for line in order.order_line:
                     if line.product_id.invoice_policy == 'cost':

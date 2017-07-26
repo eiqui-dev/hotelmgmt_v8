@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-	
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------
 #
 #    OpenERP, Open Source Management Solution
@@ -77,25 +77,7 @@ class VirtualRoom(models.Model):
 
     @api.model
     def check_availability_virtual_room(self, checkin, checkout, virtual_room_id=False, notthis=[]):
-	checkin_dt = dateutil.parser.parse(checkin).date()
-	checkout_dt = dateutil.parser.parse(checkout).date()
-        checkin_end_dt = checkin_dt + timedelta(days=1)
-        checkout_end_dt = checkout_dt + timedelta(days=-1)
-        #if self.folio_id.date_order and self.checkin:
-            #if self.checkin <= self.folio_id.date_order:
-                #raise ValidationError(_('Room line check in date should be \
-                #greater than the current date.'))
-        res_in = self.env['hotel.reservation'].search([
-            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        res_out = self.env['hotel.reservation'].search([
-            ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        res_full = self.env['hotel.reservation'].search([
-            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        occupied = res_in | res_out | res_full
-        occupied = occupied.filtered(lambda r: r.state != 'cancelled')
+        occupied = self.env['hotel.room'].rooms_occupied(checkin, checkout)
         rooms_occupied = occupied.mapped('product_id.id')
         free_rooms = self.env['hotel.room'].search([('product_id.id', 'not in', rooms_occupied),
                                                     ('id', 'not in', notthis)])

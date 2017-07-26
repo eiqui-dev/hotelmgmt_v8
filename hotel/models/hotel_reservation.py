@@ -299,6 +299,9 @@ class HotelReservation(models.Model):
     pricelist_id = fields.Many2one('product.pricelist',related='folio_id.pricelist_id',readonly="1")
     #~ domain_room_ids = fields.Char(compute='_domain_room_ids',default='_domain_rooms_ids')
     check_rooms = fields.Boolean('Check Rooms')
+    is_checkin = fields.Boolean()
+    is_checkout = fields.Boolean()
+
 
     def _compute_cardex_count(self):
         for res in self:
@@ -314,6 +317,38 @@ class HotelReservation(models.Model):
 
 #    product_uom = fields.Many2one('product.uom',string='Unit of Measure',
 #                                  required=True, default=_get_uom_id)
+    @api.model
+    def daily_plan(self):
+        today = datetime.now().date()
+        today_init = datetime.strftime(today, "%Y-%m-%d 00:00:00")
+        today_end = datetime.strftime(today, "%Y-%m-%d 23:59:59")
+        self._cr.execute("update hotel_reservation set is_checkin = False, is_checkout = False where is_checkin = True or is_checkout = True")
+        checkins_res = self.env['hotel.reservation'].search([('state','=','confirm'),('checkin','>=',today_init), ('checkin','<=',today_end)])
+        checkins_res.write({'is_checkin':True})
+        checkouts_res = self.env['hotel.reservation'].search([('state','=','booking'),('checkout','>=',today_init), ('checkout','<=',today_end)])
+        checkouts_res.write({'is_checkout':True})
+        self.env['hotel.folio'].daily_plan()
+        return True
+
+    @api.model
+    def checkin_is_today(self):
+        self.ensure_one()
+        today = datetime.now().date()
+        today_init = datetime.strftime(today, "%Y-%m-%d 00:00:00")
+        today_end = datetime.strftime(today, "%Y-%m-%d 23:59:59")
+        if self.checkin >= today_init and self.checkin <= today_end:
+            return True
+        return False
+
+    @api.model
+    def checkout_is_today(self):
+        self.ensure_one()
+        today = datetime.now().date()
+        today_init = datetime.strftime(today, "%Y-%m-%d 00:00:00")
+        today_end = datetime.strftime(today, "%Y-%m-%d 23:59:59")
+        if self.checkout >= today_init and self.checkout <= today_end:
+            return True
+        return False
 
     @api.multi
     def action_cancel(self):
@@ -323,6 +358,10 @@ class HotelReservation(models.Model):
                 'to_assign': False,
                 'discount': 100.0,
             })
+            if record.checkin_is_today():
+                record.is_checkin = False
+                folio = self.env['hotel.folio'].browse(self.folio_id.id)
+                folio.checkins_reservations = folio.room_lines.search_count([('folio_id','=',folio.id),('is_checkin','=',True)])
 
     @api.multi
     def draft(self):
@@ -334,6 +373,11 @@ class HotelReservation(models.Model):
         for record in self:
             record.state = 'done'
             record.to_assign = False
+            if record.checkout_is_today():
+                record.is_checkout = False
+                folio = self.env['hotel.folio'].browse(self.folio_id.id)
+                folio.checkouts_reservations = folio.room_lines.search_count([('folio_id','=',folio.id),('is_checkout','=',True)])
+
 
     @api.model
     def create(self, vals):
@@ -504,25 +548,7 @@ class HotelReservation(models.Model):
             self.checkin = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
         if not self.checkout:
             self.checkout = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
-        checkin_end_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
-        checkin_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
-        checkout_end_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
-        checkout_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
-        #if self.folio_id.date_order and self.checkin:
-            #if self.checkin <= self.folio_id.date_order:
-                #raise ValidationError(_('Room line check in date should be \
-                #greater than the current date.'))
-        res_in = self.env['hotel.reservation'].search([
-            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        res_out = self.env['hotel.reservation'].search([
-            ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        res_full = self.env['hotel.reservation'].search([
-            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        occupied = res_in | res_out | res_full
-        occupied = occupied.filtered(lambda r: r.state != 'cancelled')
+        occupied = self.env['hotel.room'].rooms_occupied(self.checkin, self.checkout)
         rooms_occupied= occupied.mapped('product_id.id')
         domain_rooms = [('isroom','=',True),('id', 'not in', rooms_occupied)]
         if self.room_type_id:
@@ -542,6 +568,12 @@ class HotelReservation(models.Model):
         '''
         for r in self:
             r.write({'state': 'confirm','to_assign':False})
+            _logger.info("ES HOY")
+            _logger.info(r.checkin_is_today())
+            if r.checkin_is_today():
+                r.is_checkin = True
+                folio = self.env['hotel.folio'].browse(self.folio_id.id)
+                folio.checkins_reservations = folio.room_lines.search_count([('folio_id','=',folio.id),('is_checkin','=',True)])
             #~ line = r.order_line_id
             #~ line.button_confirm()
         return True
@@ -581,25 +613,8 @@ class HotelReservation(models.Model):
         if self.checkin >= self.checkout:
                 raise ValidationError(_('Room line Check In Date Should be \
                 less than the Check Out Date!'))
-        checkin_end_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
-        checkin_dt = datetime.strptime(self.checkin, DEFAULT_SERVER_DATETIME_FORMAT)
-        checkout_end_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
-        checkout_dt = datetime.strptime(self.checkout, DEFAULT_SERVER_DATETIME_FORMAT)
-        #if self.folio_id.date_order and self.checkin:
-            #if self.checkin <= self.folio_id.date_order:
-                #raise ValidationError(_('Room line check in date should be \
-                #greater than the current date.'))
-        res_in = self.env['hotel.reservation'].search([
-            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        res_out = self.env['hotel.reservation'].search([
-            ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        res_full = self.env['hotel.reservation'].search([
-            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
-        occupied = res_in | res_out | res_full
-        occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id and r.id != self.id and r.state != 'cancelled')
+        occupied = self.env['hotel.room'].rooms_occupied(self.checkin, self.checkout)
+        occupied = occupied.filtered(lambda r: r.product_id.id == self.product_id.id and r.id != self.id)
         occupied_name = ','.join(str(x.name) for x in occupied)
         if occupied:
            warning_msg = 'You tried to confirm \

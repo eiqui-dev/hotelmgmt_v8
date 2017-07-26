@@ -93,6 +93,9 @@ class Wizard(models.TransientModel):
            'cardex_ids':[(0,False,cardex_val)]})
         if record_id.cardex_count > 0:
             record_id.state = 'booking'
+            record_id.is_checkin = False
+            folio = self.env['hotel.folio'].browse(self.reservation_id.folio_id.id)
+            folio.checkins_reservations -= 1
         return
 
     @api.multi
