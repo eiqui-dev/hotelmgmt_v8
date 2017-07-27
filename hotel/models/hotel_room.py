@@ -24,6 +24,7 @@ from openerp import models, fields, api, _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 from openerp.tools import misc, DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+import dateutil.parser
 
 
 class HotelRoom(models.Model):
