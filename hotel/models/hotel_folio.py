@@ -571,7 +571,8 @@ class HotelFolio(models.Model):
     def action_done(self):
         self.write({'state': 'done'})
         for line in self.room_lines:
-            line.write({'state': 'done'})
+            if line.state == "booking":
+                line.action_reservation_checkout()
 
 
     @api.multi

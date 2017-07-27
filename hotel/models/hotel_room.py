@@ -75,10 +75,10 @@ class HotelRoom(models.Model):
 
     @api.model
     def rooms_occupied(self, checkin, checkout):
-        checkin_end_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=1)
-        checkin_dt = datetime.strptime(checkin, DEFAULT_SERVER_DATETIME_FORMAT)
-        checkout_end_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATETIME_FORMAT) + timedelta(days=-1)
-        checkout_dt = datetime.strptime(checkout, DEFAULT_SERVER_DATETIME_FORMAT)
+        checkin_dt = dateutil.parser.parse(checkin).date()
+        checkout_dt = dateutil.parser.parse(checkout).date()
+        checkin_end_dt = checkin_dt + timedelta(days=1)
+        checkout_end_dt = checkout_dt + timedelta(days=-1)
         res_in = self.env['hotel.reservation'].search([
             ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
             ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])

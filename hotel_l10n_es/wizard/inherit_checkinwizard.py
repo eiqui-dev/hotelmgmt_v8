@@ -131,9 +131,6 @@ class Wizard(models.TransientModel):
         #     ("exit_date","=",self.exit_date),
         #     ],limit=1)
 
-        if record_id.cardex_count > 0:
-            record_id.state = 'booking'
-
         #context = { 'ids': now_cardex.id,
             # 'partner_id': record_id.partner_id,
             # 'enter_date': record_id.cardex_ids.enter_date,
