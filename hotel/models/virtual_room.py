@@ -75,6 +75,15 @@ class VirtualRoom(models.Model):
         'product.product',
         ondelete='cascade')
 
+    @api.multi
+    def get_capacity(self):
+        self.ensure_one()
+        hotel_room_obj = self.env['hotel.room']
+        room_categories = self.room_type_ids.mapped('cat_id.id')
+        room_ids = self.room_ids + hotel_room_obj.search([('categ_id.id', 'in', room_categories)])
+        capacities = room_ids.mapped('capacity')
+        return any(capacities) and min(capacities) or 0
+
     @api.model
     def check_availability_virtual_room(self, checkin, checkout, virtual_room_id=False, notthis=[]):
         occupied = self.env['hotel.room'].rooms_occupied(checkin, checkout)
