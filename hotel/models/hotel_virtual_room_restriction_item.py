@@ -24,10 +24,10 @@ from openerp.tools import DEFAULT_SERVER_DATE_FORMAT
 from datetime import datetime
 
 
-class ReservationRestrictionItem(models.Model):
-    _name = 'reservation.restriction.item'
+class HotelVirtualRoomRestrictionItem(models.Model):
+    _name = 'hotel.virtual.room.restriction.item'
 
-    restriction_id = fields.Many2one('reservation.restriction', 'Restriction Plan', ondelete='cascade', select=True)
+    restriction_id = fields.Many2one('hotel.virtual.room.restriction', 'Restriction Plan', ondelete='cascade', select=True)
     virtual_room_id = fields.Many2one('hotel.virtual.room', 'Virtual Room')
     date_start = fields.Date('From')
     date_end = fields.Date("To")

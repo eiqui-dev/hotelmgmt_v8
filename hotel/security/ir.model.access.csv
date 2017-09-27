@@ -35,5 +35,3 @@ access_currency_exchange_user,hotel.currency_exchange.user,model_currency_exchan
 access_currency_exchange_manager,hotel.currency_exchange.manager,model_currency_exchange,hotel.group_hotel_manager,1,1,1,1
 access_hotel_model_cardex_user,hotel.currency_exchange.user,hotel.model_cardex,hotel.group_hotel_user,1,1,1,0
 access_hotel_model_cardex_manager,hotel.currency_exchange.manager,hotel.model_cardex,hotel.group_hotel_manager,1,1,1,1
-access_hotel_model_virtual_room_availability,hotel.virtual_room_availability.user,hotel.model_virtual_room_availability,hotel.group_hotel_user,1,1,1,0
-access_hotel_model_virtual_room_availability,hotel.virtual_room_availability.manager,hotel.model_virtual_room_availability,hotel.group_hotel_manager,1,1,1,1

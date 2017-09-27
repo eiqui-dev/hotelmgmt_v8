@@ -23,3 +23,4 @@
 from . import hotel_wizard
 from . import sale_make_invoice_advance
 from . import checkinwizard
+from . import massive_changes

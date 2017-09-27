@@ -21,11 +21,11 @@
 from openerp import models, fields
 
 
-class ReservationRestriction(models.Model):
-    _name = 'reservation.restriction'
+class VirtualRoomRestriction(models.Model):
+    _name = 'hotel.virtual.room.restriction'
 
     name = fields.Char('Restriction Plan Name', required=True)
-    item_ids = fields.One2many('reservation.restriction.item', 'restriction_id',
+    item_ids = fields.One2many('hotel.virtual.room.restriction.item', 'restriction_id',
                                string='Restriction Items', copy=True)
     active = fields.Boolean('Active',
                             help='If unchecked, it will allow you to hide the restriction plan without removing it.', default=True)
