@@ -284,6 +284,7 @@ class HotelFolio(models.Model):
         'view_type': 'form',
         'view_mode': 'tree,form',
         'res_model': 'account.invoice',
+        'target':'new',
         'type': 'ir.actions.act_window',
         'domain': [('id','in', invoices),('type','!=','out_refund')]
         }

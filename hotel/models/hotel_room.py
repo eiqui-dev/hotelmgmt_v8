@@ -81,14 +81,14 @@ class HotelRoom(models.Model):
         checkin_end_dt = checkin_dt + timedelta(days=1)
         checkout_end_dt = checkout_dt + timedelta(days=-1)
         res_in = self.env['hotel.reservation'].search([
-            ('checkin','>',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkin','>=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
             ('checkin','<',checkout_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         res_out = self.env['hotel.reservation'].search([
             ('checkout','>',checkin_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
+            ('checkout','<=',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         res_full = self.env['hotel.reservation'].search([
-            ('checkin','<',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-            ('checkout','>',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
+            ('checkin','<=',checkin_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)),
+            ('checkout','>=',checkout_end_dt.strftime(DEFAULT_SERVER_DATE_FORMAT))])
         occupied = res_in | res_out | res_full
         occupied = occupied.filtered(lambda r: r.state != 'cancelled')
         return occupied
