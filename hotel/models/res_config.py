@@ -22,21 +22,20 @@ from openerp.osv import fields, osv
 from openerp import SUPERUSER_ID
 
 
-class hotel_configuration(osv.osv_memory):
+class HotelConfiguration(osv.osv_memory):
     _name = 'hotel.config.settings'
     _inherit = 'res.config.settings'
 
     _columns = {
-        'parity_pricelist_id': fields.integer('Pricelist ID'),
-        'parity_restrictions_id': fields.integer('Restrictions ID'),
+        'parity_pricelist_id': fields.integer('Product Pricelist ID', required=True),
+        'parity_restrictions_id': fields.integer('Restrictions ID', required=True)
     }
 
     def set_parity_pricelist_id(self, cr, uid, ids, context=None):
         parity_pricelist_id = self.browse(cr, uid, ids, context=context).parity_pricelist_id
-        res = self.pool.get('ir.values').set_default(cr, SUPERUSER_ID, 'hotel.config.settings', 'parity_pricelist_id', parity_pricelist_id)
-        return res
+        return self.pool.get('ir.values').set_default(cr, SUPERUSER_ID, 'hotel.config.settings', 'parity_pricelist_id', parity_pricelist_id)
 
     def set_parity_restrictions_id(self, cr, uid, ids, context=None):
         parity_restrictions_id = self.browse(cr, uid, ids, context=context).parity_restrictions_id
-        res = self.pool.get('ir.values').set_default(cr, SUPERUSER_ID, 'hotel.config.settings', 'parity_restrictions_id', parity_restrictions_id)
-        return res
+        return self.pool.get('ir.values').set_default(cr, SUPERUSER_ID, 'hotel.config.settings', 'parity_restrictions_id', parity_restrictions_id)
+
