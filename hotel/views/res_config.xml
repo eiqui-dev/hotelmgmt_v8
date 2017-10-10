@@ -18,6 +18,12 @@
 				    		<field name="parity_restrictions_id" />
 				    	</group>
 				    </group>
+                    <group name="default_hours" string="Hotel Default Hours">
+				    	<group>
+				    		<field name="default_arrival_hour" />
+				    		<field name="default_departure_hour" />
+				    	</group>
+				    </group>
 			    </div>
             </form>
         </field>
