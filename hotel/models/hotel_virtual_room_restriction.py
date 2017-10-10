@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields
+from openerp import models, fields, api
 
 
 class VirtualRoomRestriction(models.Model):
@@ -29,3 +29,18 @@ class VirtualRoomRestriction(models.Model):
                                string='Restriction Items', copy=True)
     active = fields.Boolean('Active',
                             help='If unchecked, it will allow you to hide the restriction plan without removing it.', default=True)
+
+
+    @api.multi
+    @api.depends('name')
+    def name_get(self):
+        restriction_id = self.env['ir.values'].sudo().get_default('hotel.config.settings', 'parity_restrictions_id')
+        if restriction_id:
+            restriction_id = int(restriction_id)
+        names = []
+        for record in self:
+            if record.id == restriction_id:
+                names.append((record.id, '%s (Parity)' % record.name))
+            else:
+                names.append((record.id, record.name))
+        return names

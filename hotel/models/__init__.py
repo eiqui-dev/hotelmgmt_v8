@@ -43,4 +43,5 @@ from . import hotel_virtual_room_restriction_item
 from . import hotel_reservation_line
 from . import cardex
 from . import hotel_virtual_room_availability
+from . import inherit_product_pricelist
 from . import res_config

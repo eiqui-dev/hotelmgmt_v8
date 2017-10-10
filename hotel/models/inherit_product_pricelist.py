@@ -18,19 +18,23 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields
+from openerp import models, api
 
 
-class HotelConfiguration(models.TransientModel):
-    _name = 'hotel.config.settings'
-    _inherit = 'res.config.settings'
+class ProductPricelist(models.Model):
+    _inherit = 'product.pricelist'
 
-    parity_pricelist_id = fields.Integer('Product Pricelist ID', required=True)
-    parity_restrictions_id = fields.Integer('Restrictions ID', required=True)
-
-
-    def set_parity_pricelist_id(self):
-        return self.env['ir.values'].sudo().set_default('hotel.config.settings', 'parity_pricelist_id', self.parity_pricelist_id)
-
-    def set_parity_restrictions_id(self):
-        return self.env['ir.values'].sudo().set_default('hotel.config.settings', 'parity_restrictions_id', self.parity_restrictions_id)
+    @api.multi
+    @api.depends('name')
+    def name_get(self):
+        pricelist_id = self.env['ir.values'].sudo().get_default('hotel.config.settings', 'parity_pricelist_id')
+        if pricelist_id:
+            pricelist_id = int(pricelist_id)
+        org_name = super(ProductPricelist, self).name_get()
+        names = []
+        for record in self:
+            if record.id == pricelist_id:
+                names.append((record.id, '%s (Parity)' % record.name))
+            else:
+                names.append((record.id, record.name))
+        return names
