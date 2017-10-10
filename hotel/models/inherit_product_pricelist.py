@@ -30,11 +30,11 @@ class ProductPricelist(models.Model):
         pricelist_id = self.env['ir.values'].sudo().get_default('hotel.config.settings', 'parity_pricelist_id')
         if pricelist_id:
             pricelist_id = int(pricelist_id)
-        org_name = super(ProductPricelist, self).name_get()
+        org_names = super(ProductPricelist, self).name_get()
         names = []
-        for record in self:
-            if record.id == pricelist_id:
-                names.append((record.id, '%s (Parity)' % record.name))
+        for name in org_names:
+            if name[0] == pricelist_id:
+                names.append((name[0], '%s (Parity)' % name[1]))
             else:
-                names.append((record.id, record.name))
+                names.append((name[0], name[1]))
         return names
