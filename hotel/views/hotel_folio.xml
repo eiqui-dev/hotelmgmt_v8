@@ -103,12 +103,24 @@
                             </button>
 
                         </div>
-                        <h1>
-                            <field name="name" colspan="4" />
-                        </h1>
+                        <!--<field name="partner_id.image" widget="image" class="oe_avatar" options="{&quot;preview_image&quot;: &quot;image_medium&quot;, &quot;size&quot;: [90, 90]}"/>-->
+                        <div class="oe_title">
+                            <h1>
+                                <field name="partner_id" default_focus="1" placeholder="Name"/>
+                            </h1>
+                            <div class="o_row">
+                                <h2>
+                                    <field name="name"/>
+                                </h2>
+                            </div>
+                        </div>
                         <group colspan="4" col="4">
+                            <field name="partner_invoice_id" domain="[('parent_id','=',partner_id)]" />
+                            <field name="pricelist_id" domain="[('type','=','sale')]" />
+                            <field name="project_id" invisible="1"/>
+                            <field name="partner_shipping_id" invisible="1" domain="[('parent_id','=',partner_id)]" />
                             <field name="date_order" />
-                            <field name="warehouse_id" string="Branch" />
+                            <field name="warehouse_id" string="Branch" invisible="1"/>
                             <field name="invoice_status" invisible="1" />
                             <field name="hotel_invoice_id" states='progress,done,cancel'
                                 readonly="1" />
@@ -118,14 +130,7 @@
                             <field name="partner_internal_comment"/>
                         </group>
                         <notebook colspan="4">
-                            <page string="Folio">
-                                <group colspan="4" col="4">
-                                    <field name="partner_id" string="Guest Name" required="1" />
-                                    <field name="partner_invoice_id" domain="[('parent_id','=',partner_id)]" />
-                                    <field name="pricelist_id" domain="[('type','=','sale')]" />
-                                    <field name="project_id" />
-                                    <field name="partner_shipping_id" invisible="1" domain="[('parent_id','=',partner_id)]" />
-                                </group>
+                            <page string="Lines">
                                 <separator string="Room Lines" id="room_lines_separator" colspan="4" />
                                 <field name="room_lines" colspan="4" string="Room Line"
                                     nolabel="1" context="{'folio_id': id}">
